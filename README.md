@@ -1,5 +1,5 @@
-# abap_w3mi_poller
-A tool to poll file change and upload changed files automatically as W3MI object  
+# ABAP W3MI poller
+A tool to poll file change and upload changed files automatically as W3MI object.
 Created mainly to simplify CSS editing in https://github.com/larshp/abapGit, but can be used for other purpose too.
 
 # Usage
