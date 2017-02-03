@@ -424,16 +424,21 @@ class lcl_poller implementation.
 endclass. " lcl_poller
 
 **********************************************************************
+
+constants:
+  GC_FILE_PARAM_NAME TYPE CHAR20 VALUE 'ZW3MIMEPOLL_FILE',
+  GC_OBJ_PARAM_NAME  TYPE CHAR20 VALUE 'ZW3MIMEPOLL_OBJ'.
+
 selection-screen begin of block b1 with frame title txt_b1.
 
 selection-screen begin of line.
 selection-screen comment (24) txt_file for field p_file.
-parameter p_file type char255 default 'c:\Temp\styles.css' obligatory.
+parameter p_file type char255 obligatory. " default 'c:\Temp\styles.css'
 selection-screen end of line.
 
 selection-screen begin of line.
 selection-screen comment (24) txt_obj for field p_obj.
-parameter p_obj type w3objid default 'ZMIME_POLLER_TEST'.
+parameter p_obj type w3objid obligatory. "default 'ZMIME_POLLER_TEST'
 selection-screen end of line.
 
 selection-screen end of block b1.
@@ -467,7 +472,27 @@ initialization.
   txt_down = 'Download before polling'. "#EC NOTEXT
   txt_upl  = 'Upload before polling'.   "#EC NOTEXT
 
+at selection-screen on value-request for p_file.
+  perform f4_file_path changing p_file.
+
+at selection-screen on value-request for p_obj.
+  perform f4_mime_path changing p_obj.
+
+at selection-screen on p_file.
+  if p_file is not initial.
+    set parameter id GC_FILE_PARAM_NAME field p_file.
+  endif.
+
+at selection-screen on p_obj.
+  if p_obj is not initial.
+    set parameter id GC_OBJ_PARAM_NAME field p_obj.
+  endif.
+
+
 **********************************************************************
+* MAIN
+**********************************************************************
+
 start-of-selection.
 
   data:
@@ -513,3 +538,66 @@ start-of-selection.
   catch lcx_error into gx.
     message gx->mv_message type 'E'.
   endtry.
+
+**********************************************************************
+* FORMS
+**********************************************************************
+
+form f4_file_path changing c_path.
+
+  data l_path type localfile.
+
+  call function 'F4_FILENAME'
+    importing
+      file_name = l_path.
+
+  c_path = l_path.
+  set parameter id GC_FILE_PARAM_NAME field l_path.
+
+endform.                    "set_file_path
+
+*&---------------------------------------------------------------------*
+*&      Form  set_mime_path
+*&---------------------------------------------------------------------*
+form f4_mime_path changing c_path.
+
+  types:
+    begin of t_w3head,
+      objid type wwwdata-objid,
+      text  type wwwdata-text,
+    end of t_w3head.
+
+  data:
+        ls_return type ddshretval,
+        lt_data   type standard table of t_w3head,
+        lt_return type standard table of ddshretval.
+
+  select distinct objid text from wwwdata
+    into corresponding fields of table lt_data
+    where relid = 'MI'
+    and   objid like 'Z%'
+    order by objid.
+
+  call function 'F4IF_INT_TABLE_VALUE_REQUEST'
+    exporting
+      retfield        = 'OBJID'
+      dynprofield     = 'P_MPATH'
+      value_org       = 'S'
+    tables
+      value_tab       = lt_data
+      return_tab      = lt_return
+    exceptions
+      parameter_error = 1
+      no_values_found = 2
+      others          = 3.
+
+  if sy-subrc is not initial.
+    message id sy-msgid type sy-msgty number sy-msgno
+            with sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  endif.
+
+  read table lt_return into ls_return index 1.
+  c_path = ls_return-fieldval.
+  set parameter id GC_OBJ_PARAM_NAME field ls_return-fieldval.
+
+endform.                    "set_mime_path
