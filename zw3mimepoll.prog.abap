@@ -3,6 +3,7 @@
 *&---------------------------------------------------------------------*
 
 report zw3mimepoll.
+tables sscrfields.
 
 *&---------------------------------------------------------------------*
 *& lcx_error
@@ -354,13 +355,16 @@ class lcl_poller implementation.
     cl_gui_frontend_services=>get_file_separator( changing file_separator = lv_sep ).
     find first occurrence of lv_sep in reverse( iv_filename ) match offset lv_offs.
 
-    if sy-subrc > 0.
-      lcx_error=>raise( 'Cannot split dir and filename' ).
+    if sy-subrc = 0.
+      lv_offs      = strlen( iv_filename ) - lv_offs.
+      mv_directory = substring( val = iv_filename len = lv_offs ).
+      mv_filename  = substring( val = iv_filename off = lv_offs ).
+    else.
+      cl_gui_frontend_services=>get_sapgui_workdir( changing sapworkdir = mv_directory ).
+      mv_directory = mv_directory && lv_sep.
+      mv_filename  = iv_filename.
     endif.
 
-    lv_offs      = strlen( iv_filename ) - lv_offs.
-    mv_directory = substring( val = iv_filename len = lv_offs ).
-    mv_filename  = substring( val = iv_filename off = lv_offs ).
 
     data lv_attr type ty_file_attr.
     lv_attr      = read_attributes( ).
@@ -458,12 +462,12 @@ selection-screen begin of block b1 with frame title txt_b1.
 
 selection-screen begin of line.
 selection-screen comment (24) txt_file for field p_file.
-parameter p_file type char255 obligatory. " default 'c:\Temp\styles.css'
+parameter p_file type char255.
 selection-screen end of line.
 
 selection-screen begin of line.
 selection-screen comment (24) txt_obj for field p_obj.
-parameter p_obj type w3objid obligatory. "default 'ZMIME_POLLER_TEST'
+parameter p_obj type w3objid.
 selection-screen end of line.
 
 selection-screen end of block b1.
@@ -487,6 +491,8 @@ selection-screen end of line.
 
 selection-screen end of block b2.
 
+selection-screen function key 1.
+
 initialization.
   txt_b1   = 'Poll target'.             "#EC NOTEXT
   txt_file = 'Path to file'.            "#EC NOTEXT
@@ -496,6 +502,11 @@ initialization.
   txt_noac = 'Just start polling'.      "#EC NOTEXT
   txt_down = 'Download before polling'. "#EC NOTEXT
   txt_upl  = 'Upload before polling'.   "#EC NOTEXT
+
+  sscrfields-functxt_01 = 'Set dummy'.  "#EC NOTEXT
+
+  get parameter id GC_FILE_PARAM_NAME field p_file.
+  get parameter id GC_OBJ_PARAM_NAME field p_obj.
 
 at selection-screen on value-request for p_file.
   perform f4_file_path changing p_file.
@@ -513,6 +524,12 @@ at selection-screen on p_obj.
     set parameter id GC_OBJ_PARAM_NAME field p_obj.
   endif.
 
+at selection-screen.
+  case sy-ucomm.
+    when 'FC01'.          "Set dummy
+      p_obj  = 'ZMIME_POLLER_TEST'.
+      p_file = 'zmime_poller_test.txt'.
+  endcase.
 
 **********************************************************************
 * MAIN
