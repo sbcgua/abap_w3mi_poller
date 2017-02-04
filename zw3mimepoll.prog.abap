@@ -76,14 +76,19 @@ class lcl_resource_updater definition final.
                 ev_size     type i
       raising lcx_error.
 
+    class-methods get_object_info
+      changing cs_object   type wwwdatatab
+      raising lcx_error.
+
 endclass. "lcl_resource_updater
 
 class lcl_resource_updater implementation.
 
   method upload_file.
 
-    data: lt_data type ty_w3tab,
-          lv_size type i.
+    data: lt_data   type ty_w3tab,
+          ls_object like is_object,
+          lv_size   type i.
 
     if abap_false = check_obj_exists( is_object ).
       lcx_error=>raise( 'MIME object does not exist' ).
@@ -93,7 +98,13 @@ class lcl_resource_updater implementation.
                importing et_data     = lt_data
                          ev_size     = lv_size ).
 
-    update_object( is_object = is_object
+    ls_object = is_object.
+    get_object_info( changing cs_object = ls_object ).
+    ls_object-chname = sy-uname.
+    ls_object-tdate  = sy-datum.
+    ls_object-ttime  = sy-uzeit.
+
+    update_object( is_object = ls_object
                    it_data   = lt_data
                    iv_size   = lv_size ).
 
@@ -242,6 +253,20 @@ class lcl_resource_updater implementation.
     rv_yes = boolc( sy-subrc = 0 ).
 
   endmethod.  " check_obj_exists.
+
+  method get_object_info.
+
+    select single * into corresponding fields of cs_object
+      from wwwdata
+      where relid = cs_object-relid
+      and   objid = cs_object-objid
+      and   srtf2 = 0.
+
+    if sy-subrc > 0.
+      lcx_error=>raise( 'Cannot read W3xx info' ).
+    endif.
+
+  endmethod.  " get_object_info.
 
 endclass. "lcl_resource_updater
 
