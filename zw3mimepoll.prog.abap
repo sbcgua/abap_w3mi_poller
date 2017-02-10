@@ -462,12 +462,12 @@ selection-screen begin of block b1 with frame title txt_b1.
 
 selection-screen begin of line.
 selection-screen comment (24) txt_file for field p_file.
-parameter p_file type char255.
+parameters p_file type char255.
 selection-screen end of line.
 
 selection-screen begin of line.
 selection-screen comment (24) txt_obj for field p_obj.
-parameter p_obj type w3objid.
+parameters p_obj type w3objid.
 selection-screen end of line.
 
 selection-screen end of block b1.
@@ -476,17 +476,17 @@ selection-screen begin of block b2 with frame title txt_b2.
 
 selection-screen begin of line.
 selection-screen comment (24) txt_noac for field p_noact.
-parameter p_noact type char1 radiobutton group r1 default 'X'.
+parameters p_noact type char1 radiobutton group r1 default 'X'.
 selection-screen end of line.
 
 selection-screen begin of line.
 selection-screen comment (24) txt_down for field p_down.
-parameter p_down type char1 radiobutton group r1.
+parameters p_down type char1 radiobutton group r1.
 selection-screen end of line.
 
 selection-screen begin of line.
 selection-screen comment (24) txt_upl for field p_upl.
-parameter p_upl type char1 radiobutton group r1.
+parameters p_upl type char1 radiobutton group r1.
 selection-screen end of line.
 
 selection-screen end of block b2.
@@ -585,16 +585,31 @@ start-of-selection.
 * FORMS
 **********************************************************************
 
-form f4_file_path changing c_path.
+form f4_file_path changing c_path type char255.
 
-  data l_path type localfile.
+  data:
+        lt_files type filetable,
+        lv_rc    type i,
+        lv_uact  type i.
 
-  call function 'F4_FILENAME'
-    importing
-      file_name = l_path.
+  field-symbols <file> like line of lt_files.
 
-  c_path = l_path.
-  set parameter id GC_FILE_PARAM_NAME field l_path.
+  cl_gui_frontend_services=>file_open_dialog(
+    changing
+      file_table  = lt_files
+      rc          = lv_rc
+      user_action = lv_uact
+    exceptions others = 4 ).
+
+  if sy-subrc > 0 OR lv_uact <> cl_gui_frontend_services=>action_ok.
+    return.
+  endif.
+
+  read table lt_files assigning <file> index 1.
+  if sy-subrc = 0.
+    c_path = <file>-filename.
+    set parameter id GC_FILE_PARAM_NAME field c_path.
+  endif.
 
 endform.                    "set_file_path
 
