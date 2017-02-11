@@ -6,7 +6,7 @@ report zw3mimepoll.
 tables sscrfields.
 
 *&---------------------------------------------------------------------*
-*& lcx_error
+*& CLASS lcx_error
 *&---------------------------------------------------------------------*
 
 class lcx_error definition final inheriting from cx_static_check.
@@ -461,13 +461,21 @@ constants:
 selection-screen begin of block b1 with frame title txt_b1.
 
 selection-screen begin of line.
-selection-screen comment (24) txt_file for field p_file.
-parameters p_file type char255.
+selection-screen comment (24) t_obj1 for field p_obj1.
+parameters p_obj1  type w3objid.
+parameters p_file1 type char255.
 selection-screen end of line.
 
 selection-screen begin of line.
-selection-screen comment (24) txt_obj for field p_obj.
-parameters p_obj type w3objid.
+selection-screen comment (24) t_obj2 for field p_obj2.
+parameters p_obj2  type w3objid.
+parameters p_file2 type char255.
+selection-screen end of line.
+
+selection-screen begin of line.
+selection-screen comment (24) t_obj3 for field p_obj3.
+parameters p_obj3  type w3objid.
+parameters p_file3 type char255.
 selection-screen end of line.
 
 selection-screen end of block b1.
@@ -494,9 +502,10 @@ selection-screen end of block b2.
 selection-screen function key 1.
 
 initialization.
-  txt_b1   = 'Poll target'.             "#EC NOTEXT
-  txt_file = 'Path to file'.            "#EC NOTEXT
-  txt_obj  = 'W3MI object'.             "#EC NOTEXT
+  txt_b1   = 'Poll targets'.            "#EC NOTEXT
+  t_obj1   = 'W3MI object / File path'. "#EC NOTEXT
+  t_obj2   = 'W3MI object / File path'. "#EC NOTEXT
+  t_obj3   = 'W3MI object / File path'. "#EC NOTEXT
 
   txt_b2   = 'Start parameters'.        "#EC NOTEXT
   txt_noac = 'Just start polling'.      "#EC NOTEXT
@@ -505,30 +514,42 @@ initialization.
 
   sscrfields-functxt_01 = 'Set dummy'.  "#EC NOTEXT
 
-  get parameter id GC_FILE_PARAM_NAME field p_file.
-  get parameter id GC_OBJ_PARAM_NAME field p_obj.
+  get parameter id GC_FILE_PARAM_NAME field p_file1.
+  get parameter id GC_OBJ_PARAM_NAME field p_obj1.
 
-at selection-screen on value-request for p_file.
-  perform f4_file_path changing p_file.
+at selection-screen on value-request for p_file1.
+  perform f4_file_path changing p_file1.
 
-at selection-screen on value-request for p_obj.
-  perform f4_mime_path changing p_obj.
+at selection-screen on value-request for p_obj1.
+  perform f4_mime_path changing p_obj1.
 
-at selection-screen on p_file.
-  if p_file is not initial.
-    set parameter id GC_FILE_PARAM_NAME field p_file.
+at selection-screen on value-request for p_file2.
+  perform f4_file_path changing p_file2.
+
+at selection-screen on value-request for p_obj2.
+  perform f4_mime_path changing p_obj2.
+
+at selection-screen on value-request for p_file3.
+  perform f4_file_path changing p_file3.
+
+at selection-screen on value-request for p_obj3.
+  perform f4_mime_path changing p_obj3.
+
+at selection-screen on p_file1.
+  if p_file1 is not initial.
+    set parameter id GC_FILE_PARAM_NAME field p_file1.
   endif.
 
-at selection-screen on p_obj.
-  if p_obj is not initial.
-    set parameter id GC_OBJ_PARAM_NAME field p_obj.
+at selection-screen on p_obj1.
+  if p_obj1 is not initial.
+    set parameter id GC_OBJ_PARAM_NAME field p_obj1.
   endif.
 
 at selection-screen.
   case sy-ucomm.
     when 'FC01'.          "Set dummy
-      p_obj  = 'ZMIME_POLLER_TEST'.
-      p_file = 'zmime_poller_test.txt'.
+      p_obj1  = 'ZMIME_POLLER_TEST'.
+      p_file1 = 'zmime_poller_test.txt'.
   endcase.
 
 **********************************************************************
@@ -545,8 +566,8 @@ start-of-selection.
         gx        type ref to lcx_error.
 
   gs_obj-relid = 'MI'. " Fix to mime for the moment
-  gs_obj-objid = p_obj.
-  gv_file      = p_file.
+  gs_obj-objid = p_obj1.
+  gv_file      = p_file1.
 
   try.
 
