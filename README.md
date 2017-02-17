@@ -8,7 +8,8 @@ Created mainly to simplify CSS editing in https://github.com/larshp/abapGit, but
 * Otherwise, create program (SE38) `ZW3MIMEPOLL` and copy the content of `zw3mimepoll.prog.abap` file to it. Also create user parameters `ZW3MIMEPOLL_FILE` and `ZW3MIMEPOLL_OBJ` (SE80 => Other objects => Other => SET/GET Parameters or SM30 on TPARA table).
 
 ## Usage
-Enter filename to poll and target object at selection screen.  
+Enter filename to poll and target object at selection screen. You can also choose multiple polling pairs. The first pair is remembered in user parameters for the session live time.
+
 Optionally, choose if you want to upload the file to SAP or replace the fronend file before the polling start.
 
 ## Screenshots
