@@ -5,8 +5,10 @@
 report zw3mimepoll.
 tables sscrfields.
 
+constants gc_w3mime_poller_version type string value '1.0.0'.
+
 *&---------------------------------------------------------------------*
-*& lcx_error
+*& CLASS lcx_error
 *&---------------------------------------------------------------------*
 
 class lcx_error definition final inheriting from cx_static_check.
@@ -30,68 +32,87 @@ class lcx_error implementation.
 endclass. " lcx_error
 
 *&---------------------------------------------------------------------*
-*& lcl_resource_updater
+*& CLASS lcl_w3mi_storage
 *&---------------------------------------------------------------------*
-class lcl_resource_updater definition final.
+class lcl_w3mi_storage definition final.
   public section.
 
-    types: ty_w3tab type standard table of w3mime.
+    types:
+      ty_w3tab type standard table of w3mime,
+      begin of ty_w3obj_key,
+        relid    type wwwdata-relid,
+        objid    type wwwdata-objid,
+      end of ty_w3obj_key.
 
-    class-methods upload_file
+    class-methods upload
       importing iv_filename type string
-                is_object   type wwwdatatab
+                is_w3key    type ty_w3obj_key
       raising lcx_error.
 
-    class-methods download_file
+    class-methods download
       importing iv_filename type string
-                is_object   type wwwdatatab
+                is_w3key    type ty_w3obj_key
       raising lcx_error.
 
     class-methods check_obj_exists
-      importing is_object     type wwwdatatab
+      importing is_w3key      type ty_w3obj_key
       returning value(rv_yes) type abap_bool.
 
   private section.
 
     class-methods read_file
-      importing iv_filename    type string
-      exporting et_data        type ty_w3tab
-                ev_size        type i
-      raising lcx_error.
-
-    class-methods write_file
-      importing iv_filename    type string
-                iv_size        type i
-      changing  ct_data        type ty_w3tab
-      raising lcx_error.
-
-    class-methods update_object
-      importing is_object   type wwwdatatab
-                it_data     type ty_w3tab
-                iv_size     type i
-      raising lcx_error.
-
-    class-methods get_object
-      importing is_object   type wwwdatatab
+      importing iv_filename type string
       exporting et_data     type ty_w3tab
                 ev_size     type i
       raising lcx_error.
 
-    class-methods get_object_info
-      changing cs_object   type wwwdatatab
+    class-methods write_file
+      importing iv_filename type string
+                iv_size     type i
+      changing  ct_data     type ty_w3tab
       raising lcx_error.
 
-endclass. "lcl_resource_updater
+    class-methods read_object
+      importing is_w3key type ty_w3obj_key
+      exporting et_data  type ty_w3tab
+                ev_size  type i
+      raising lcx_error.
 
-class lcl_resource_updater implementation.
+    class-methods update_object
+      importing is_w3key type ty_w3obj_key
+                it_data  type ty_w3tab
+                iv_size  type i
+      raising lcx_error.
 
-  method upload_file.
+    class-methods get_object_info
+      importing is_w3key         type ty_w3obj_key
+      returning value(rs_object) type wwwdatatab
+      raising lcx_error.
+
+endclass. "lcl_w3mi_storage
+
+class lcl_w3mi_storage implementation.
+
+  method check_obj_exists.
+
+    data dummy type wwwdata-relid.
+
+    select single relid into dummy
+      from wwwdata
+      where relid = is_w3key-relid
+      and   objid = is_w3key-objid
+      and   srtf2 = 0.
+
+    rv_yes = boolc( sy-subrc = 0 ).
+
+  endmethod.  " check_obj_exists.
+
+  method upload.
 
     data: lt_data   type ty_w3tab,
-          ls_object like is_object,
           lv_size   type i.
 
-    if abap_false = check_obj_exists( is_object ).
+    if abap_false = check_obj_exists( is_w3key ).
       lcx_error=>raise( 'MIME object does not exist' ).
     endif.
 
@@ -99,36 +120,30 @@ class lcl_resource_updater implementation.
                importing et_data     = lt_data
                          ev_size     = lv_size ).
 
-    ls_object = is_object.
-    get_object_info( changing cs_object = ls_object ).
-    ls_object-chname = sy-uname.
-    ls_object-tdate  = sy-datum.
-    ls_object-ttime  = sy-uzeit.
-
-    update_object( is_object = ls_object
+    update_object( is_w3key  = is_w3key
                    it_data   = lt_data
                    iv_size   = lv_size ).
 
-  endmethod.  " upload_file.
+  endmethod.  " upload.
 
-  method download_file.
+  method download.
 
     data: lt_data type ty_w3tab,
           lv_size type i.
 
-    if abap_false = check_obj_exists( is_object ).
+    if abap_false = check_obj_exists( is_w3key ).
       lcx_error=>raise( 'MIME object does not exist' ).
     endif.
 
-    get_object( exporting is_object = is_object
-                importing ev_size   = lv_size
-                          et_data   = lt_data ).
+    read_object( exporting is_w3key  = is_w3key
+                 importing ev_size   = lv_size
+                           et_data   = lt_data ).
 
     write_file( exporting iv_filename = iv_filename
                           iv_size     = lv_size
                 changing  ct_data     = lt_data ).
 
-  endmethod.  " download_file.
+  endmethod.  " download.
 
   method read_file.
 
@@ -171,10 +186,11 @@ class lcl_resource_updater implementation.
 
   method update_object.
 
-    data ls_param type wwwparams.
+    data: ls_param  type wwwparams,
+          ls_object type wwwdatatab.
 
-    ls_param-relid = is_object-relid.
-    ls_param-objid = is_object-objid.
+    ls_param-relid = is_w3key-relid.
+    ls_param-objid = is_w3key-objid.
     ls_param-name  = 'filesize'.
     ls_param-value = iv_size.
     condense ls_param-value.
@@ -189,9 +205,14 @@ class lcl_resource_updater implementation.
       lcx_error=>raise( 'Cannot upload W3xx data' ).
     endif.
 
+    ls_object = get_object_info( is_w3key ).
+    ls_object-chname = sy-uname.
+    ls_object-tdate  = sy-datum.
+    ls_object-ttime  = sy-uzeit.
+
     call function 'WWWDATA_EXPORT'
       exporting
-        key               = is_object
+        key               = ls_object
       tables
         mime              = it_data
       exceptions
@@ -204,16 +225,17 @@ class lcl_resource_updater implementation.
 
   endmethod.  " update_object.
 
-  method get_object.
+  method read_object.
 
-    data lv_value type w3_qvalue.
+    data: lv_value  type w3_qvalue,
+          ls_object type wwwdatatab.
 
     clear: et_data, ev_size.
 
     call function 'WWWPARAMS_READ'
       exporting
-        relid = is_object-relid
-        objid = is_object-objid
+        relid = is_w3key-relid
+        objid = is_w3key-objid
         name  = 'filesize'
       importing
         value = lv_value
@@ -224,11 +246,13 @@ class lcl_resource_updater implementation.
       lcx_error=>raise( 'Cannot read W3xx filesize parameter' ).
     endif.
 
-    ev_size = lv_value.
+    ev_size         = lv_value.
+    ls_object-relid = is_w3key-relid.
+    ls_object-objid = is_w3key-objid.
 
     call function 'WWWDATA_IMPORT'
       exporting
-        key               = is_object
+        key               = ls_object
       tables
         mime              = et_data
       exceptions
@@ -239,28 +263,14 @@ class lcl_resource_updater implementation.
       lcx_error=>raise( 'Cannot upload W3xx data' ).
     endif.
 
-  endmethod.  " get_object.
-
-  method check_obj_exists.
-
-    data dummy like is_object-relid.
-
-    select single relid into dummy
-      from wwwdata
-      where relid = is_object-relid
-      and   objid = is_object-objid
-      and   srtf2 = 0.
-
-    rv_yes = boolc( sy-subrc = 0 ).
-
-  endmethod.  " check_obj_exists.
+  endmethod.  " read_object.
 
   method get_object_info.
 
-    select single * into corresponding fields of cs_object
+    select single * into corresponding fields of rs_object
       from wwwdata
-      where relid = cs_object-relid
-      and   objid = cs_object-objid
+      where relid = is_w3key-relid
+      and   objid = is_w3key-objid
       and   srtf2 = 0.
 
     if sy-subrc > 0.
@@ -269,19 +279,27 @@ class lcl_resource_updater implementation.
 
   endmethod.  " get_object_info.
 
-endclass. "lcl_resource_updater
+endclass. "lcl_w3mi_storage
 
 *&---------------------------------------------------------------------*
-*& lcl_validator
+*& CLASS lcl_validator
 *&---------------------------------------------------------------------*
+
 class lcl_validator definition final.
   public section.
     class-methods validate_params
       importing
         iv_filename        type string
-        is_obj             type wwwdatatab
+        is_w3key           type lcl_w3mi_storage=>ty_w3obj_key
         iv_skip_file_check type abap_bool default abap_false
       raising lcx_error.
+
+    class-methods normalize_filename
+      importing
+        value(iv_filename)  type string
+      exporting
+        value(ev_filename)  type string
+        value(ev_directory) type string.
 
 endclass. "lcl_validator
 
@@ -289,21 +307,39 @@ class lcl_validator implementation.
 
   method validate_params.
 
-    if iv_skip_file_check is initial.
-      if abap_false = cl_gui_frontend_services=>file_exist( iv_filename ).
-        lcx_error=>raise( 'File does not exist' ).
-      endif.
+    if iv_skip_file_check is initial
+       and abap_false = cl_gui_frontend_services=>file_exist( iv_filename ).
+      lcx_error=>raise( 'File does not exist' ).
     endif.
 
-    if abap_false = lcl_resource_updater=>check_obj_exists( is_obj ).
+    if abap_false = lcl_w3mi_storage=>check_obj_exists( is_w3key ).
       lcx_error=>raise( 'MIME object does not exist' ).
     endif.
 
   endmethod.  " validate_params.
 
+  method normalize_filename.
+
+    data: lv_offs type i,
+          lv_sep  type c.
+
+    cl_gui_frontend_services=>get_file_separator( changing file_separator = lv_sep ).
+
+    find first occurrence of lv_sep in reverse( iv_filename ) match offset lv_offs.
+
+    if sy-subrc = 0.
+      lv_offs      = strlen( iv_filename ) - lv_offs.
+      ev_directory = substring( val = iv_filename len = lv_offs ).
+      ev_filename  = substring( val = iv_filename off = lv_offs ).
+    else.
+      cl_gui_frontend_services=>get_sapgui_workdir( changing sapworkdir = ev_directory ).
+      ev_directory = ev_directory && lv_sep.
+      ev_filename  = iv_filename.
+    endif.
+
+  endmethod.  " normalize_filename.
+
 endclass. "lcl_validator
-
-
 
 *&---------------------------------------------------------------------*
 *& lcl_poller
@@ -312,29 +348,40 @@ endclass. "lcl_validator
 class lcl_poller definition final.
   public section.
 
-    types: begin of ty_file_attr,
-             mdate type dats,
-             mtime type tims,
-             stamp type timestamp,
-           end of ty_file_attr.
+    types:
+      begin of ty_file_attr,
+        mdate type dats,
+        mtime type tims,
+        stamp type timestamp,
+      end of ty_file_attr,
+      begin of ty_poll_target,
+        w3key     type lcl_w3mi_storage=>ty_w3obj_key,
+        filename  type string,
+        directory type string,
+        timestamp type timestamp,
+      end of ty_poll_target,
+      tt_poll_targets type standard table of ty_poll_target with default key.
 
     methods constructor
       importing iv_interval type i
-                iv_filename type string
-                is_obj      type wwwdatatab
+                it_targets  type tt_poll_targets
       raising lcx_error.
 
     methods start.
-    methods handle_finished for event finished of cl_gui_timer.
+    methods handle_timer for event finished of cl_gui_timer.
+
+    class-methods format_dt
+      importing is_attr       type ty_file_attr
+      returning value(rv_str) type string.
 
   private section.
-    data: mo_timer     type ref to cl_gui_timer,
-          mv_filename  type string,
-          mv_directory type string,
-          ms_obj       type wwwdatatab,
-          mv_timestamp type timestamp.
+
+    data: mo_timer   type ref to cl_gui_timer,
+          mt_targets type tt_poll_targets.
 
     methods read_attributes
+      importing iv_dir         type string
+                iv_file        type string
       returning value(rv_attr) type ty_file_attr
       raising lcx_error.
 
@@ -342,54 +389,62 @@ endclass.   "lcl_poller
 
 class lcl_poller implementation.
 
+  method format_dt.
+    rv_str = |{ is_attr-mdate+0(4) }-{ is_attr-mdate+4(2) }-{ is_attr-mdate+6(2) } |
+          && |{ is_attr-mtime+0(2) }:{ is_attr-mtime+2(2) }:{ is_attr-mtime+4(2) }|.
+  endmethod.  " format_dt.
+
   method constructor.
 
-    data:
-          lv_offs  type i,
-          lv_sep   type c.
+    data: ls_attr type ty_file_attr,
+          lv_idx  type char10,
+          lv_msg  type string.
 
-    lcl_validator=>validate_params( iv_filename = iv_filename is_obj = is_obj ).
+    field-symbols: <target> like line of mt_targets.
 
-    ms_obj = is_obj.
+    assert lines( it_targets ) > 0.
+    mt_targets = it_targets.
 
-    cl_gui_frontend_services=>get_file_separator( changing file_separator = lv_sep ).
-    find first occurrence of lv_sep in reverse( iv_filename ) match offset lv_offs.
+    write / 'Targets:'.
 
-    if sy-subrc = 0.
-      lv_offs      = strlen( iv_filename ) - lv_offs.
-      mv_directory = substring( val = iv_filename len = lv_offs ).
-      mv_filename  = substring( val = iv_filename off = lv_offs ).
-    else.
-      cl_gui_frontend_services=>get_sapgui_workdir( changing sapworkdir = mv_directory ).
-      mv_directory = mv_directory && lv_sep.
-      mv_filename  = iv_filename.
-    endif.
+    loop at mt_targets assigning <target>.
+      lv_idx = sy-tabix.
 
+      lcl_validator=>validate_params(
+        iv_filename = <target>-directory && <target>-filename
+        is_w3key    = <target>-w3key ).
 
-    data lv_attr type ty_file_attr.
-    lv_attr      = read_attributes( ).
-    mv_timestamp = lv_attr-stamp.
+      ls_attr = read_attributes(
+        iv_dir  = <target>-directory
+        iv_file = <target>-filename ).
 
-    data lv_message type string.
-    lv_message = |Polling started: { lv_attr-mdate } { lv_attr-mtime }|.
-    write / lv_message.
+      <target>-timestamp = ls_attr-stamp.
 
+      lv_msg = |  ({ condense( lv_idx ) }): {
+               <target>-w3key-objid } [{ <target>-w3key-relid
+               }] <=> { <target>-directory && <target>-filename
+               } [{ format_dt( ls_attr ) }]|.
+      write / lv_msg.
+
+    endloop.
+
+    write / 'Staring polling ...'.
+    uline.
     create object mo_timer.
-    set handler me->handle_finished for mo_timer.
+    set handler me->handle_timer for mo_timer.
     mo_timer->interval = iv_interval.
 
   endmethod.  " constructor.
 
   method read_attributes.
 
-    data:
-          lv_cnt   type i,
+    data: lv_cnt   type i,
           lt_files type standard table of file_info,
           ls_file  like line of lt_files.
 
     cl_gui_frontend_services=>directory_list_files(
-      exporting directory  = mv_directory
-                filter     = mv_filename
+      exporting directory  = iv_dir
+                filter     = iv_file
       changing  file_table = lt_files
                 count      = lv_cnt
       exceptions others    = 4 ).
@@ -418,37 +473,46 @@ class lcl_poller implementation.
 
   endmethod.  "start.
 
-  method handle_finished.
+  method handle_timer.
 
-    data: lv_attr type ty_file_attr,
+    data: ls_attr type ty_file_attr,
+          lv_msg  type string,
           lx type ref to lcx_error.
 
-    try.
-      lv_attr = read_attributes( ).
-    catch lcx_error into lx.
-      message lx->mv_message type 'E'.
-    endtry.
+    field-symbols: <target> like line of mt_targets.
 
-    if mv_timestamp < lv_attr-stamp.
-      data lv_message type string.
-      lv_message = |File changed: { lv_attr-mdate } { lv_attr-mtime }|.
-      write / lv_message.
-
-      mv_timestamp = lv_attr-stamp.
+    loop at mt_targets assigning <target>.
 
       try.
-        lcl_resource_updater=>upload_file(
-          iv_filename = mv_directory && mv_filename
-          is_object   = ms_obj ).
+        ls_attr = read_attributes(
+          iv_dir  = <target>-directory
+          iv_file = <target>-filename ).
       catch lcx_error into lx.
         message lx->mv_message type 'E'.
       endtry.
 
-    endif.
+      if <target>-timestamp < ls_attr-stamp.
+        lv_msg = |File changed: { <target>-directory && <target>-filename
+                 } [{ format_dt( ls_attr ) }]|.
+        write / lv_msg.
+
+        <target>-timestamp = ls_attr-stamp.
+
+        try.
+          lcl_w3mi_storage=>upload(
+            iv_filename = <target>-directory && <target>-filename
+            is_w3key    = <target>-w3key ).
+        catch lcx_error into lx.
+          message lx->mv_message type 'E'.
+        endtry.
+
+      endif.
+
+    endloop.
 
     mo_timer->run( ).
 
-  endmethod.
+  endmethod.  "handle_timer
 
 endclass. " lcl_poller
 
@@ -461,13 +525,21 @@ constants:
 selection-screen begin of block b1 with frame title txt_b1.
 
 selection-screen begin of line.
-selection-screen comment (24) txt_file for field p_file.
-parameters p_file type char255.
+selection-screen comment (24) t_obj1 for field p_obj1.
+parameters p_obj1  type w3objid.
+parameters p_file1 type char255.
 selection-screen end of line.
 
 selection-screen begin of line.
-selection-screen comment (24) txt_obj for field p_obj.
-parameters p_obj type w3objid.
+selection-screen comment (24) t_obj2 for field p_obj2.
+parameters p_obj2  type w3objid.
+parameters p_file2 type char255.
+selection-screen end of line.
+
+selection-screen begin of line.
+selection-screen comment (24) t_obj3 for field p_obj3.
+parameters p_obj3  type w3objid.
+parameters p_file3 type char255.
 selection-screen end of line.
 
 selection-screen end of block b1.
@@ -494,9 +566,10 @@ selection-screen end of block b2.
 selection-screen function key 1.
 
 initialization.
-  txt_b1   = 'Poll target'.             "#EC NOTEXT
-  txt_file = 'Path to file'.            "#EC NOTEXT
-  txt_obj  = 'W3MI object'.             "#EC NOTEXT
+  txt_b1   = 'Poll targets'.            "#EC NOTEXT
+  t_obj1   = 'W3MI object / File path'. "#EC NOTEXT
+  t_obj2   = 'W3MI object / File path'. "#EC NOTEXT
+  t_obj3   = 'W3MI object / File path'. "#EC NOTEXT
 
   txt_b2   = 'Start parameters'.        "#EC NOTEXT
   txt_noac = 'Just start polling'.      "#EC NOTEXT
@@ -505,30 +578,42 @@ initialization.
 
   sscrfields-functxt_01 = 'Set dummy'.  "#EC NOTEXT
 
-  get parameter id GC_FILE_PARAM_NAME field p_file.
-  get parameter id GC_OBJ_PARAM_NAME field p_obj.
+  get parameter id GC_FILE_PARAM_NAME field p_file1.
+  get parameter id GC_OBJ_PARAM_NAME field p_obj1.
 
-at selection-screen on value-request for p_file.
-  perform f4_file_path changing p_file.
+at selection-screen on value-request for p_file1.
+  perform f4_file_path changing p_file1.
 
-at selection-screen on value-request for p_obj.
-  perform f4_mime_path changing p_obj.
+at selection-screen on value-request for p_obj1.
+  perform f4_mime_path changing p_obj1.
 
-at selection-screen on p_file.
-  if p_file is not initial.
-    set parameter id GC_FILE_PARAM_NAME field p_file.
+at selection-screen on value-request for p_file2.
+  perform f4_file_path changing p_file2.
+
+at selection-screen on value-request for p_obj2.
+  perform f4_mime_path changing p_obj2.
+
+at selection-screen on value-request for p_file3.
+  perform f4_file_path changing p_file3.
+
+at selection-screen on value-request for p_obj3.
+  perform f4_mime_path changing p_obj3.
+
+at selection-screen on p_file1.
+  if p_file1 is not initial.
+    set parameter id GC_FILE_PARAM_NAME field p_file1.
   endif.
 
-at selection-screen on p_obj.
-  if p_obj is not initial.
-    set parameter id GC_OBJ_PARAM_NAME field p_obj.
+at selection-screen on p_obj1.
+  if p_obj1 is not initial.
+    set parameter id GC_OBJ_PARAM_NAME field p_obj1.
   endif.
 
 at selection-screen.
   case sy-ucomm.
     when 'FC01'.          "Set dummy
-      p_obj  = 'ZMIME_POLLER_TEST'.
-      p_file = 'zmime_poller_test.txt'.
+      p_obj1  = 'ZMIME_POLLER_TEST'.
+      p_file1 = 'zmime_poller_test.txt'.
   endcase.
 
 **********************************************************************
@@ -538,41 +623,70 @@ at selection-screen.
 start-of-selection.
 
   data:
-        go_poller type ref to lcl_poller,
-        gs_obj    type wwwdatatab,
-        gv_file   type string,
-        gv_msg    type string,
-        gx        type ref to lcx_error.
+        go_poller  type ref to lcl_poller,
+        gt_targets type lcl_poller=>tt_poll_targets,
+        gv_msg     type string,
+        gx         type ref to lcx_error.
 
-  gs_obj-relid = 'MI'. " Fix to mime for the moment
-  gs_obj-objid = p_obj.
-  gv_file      = p_file.
+  field-symbols <g_target> like line of gt_targets.
+
+  append initial line to gt_targets assigning <g_target>.
+  <g_target>-w3key-relid = 'MI'. " Fix to mime for the moment
+  <g_target>-w3key-objid = p_obj1.
+  <g_target>-filename    = p_file1.
+
+  append initial line to gt_targets assigning <g_target>.
+  <g_target>-w3key-relid = 'MI'. " Fix to mime for the moment
+  <g_target>-w3key-objid = p_obj2.
+  <g_target>-filename    = p_file2.
+
+  append initial line to gt_targets assigning <g_target>.
+  <g_target>-w3key-relid = 'MI'. " Fix to mime for the moment
+  <g_target>-w3key-objid = p_obj3.
+  <g_target>-filename    = p_file3.
 
   try.
 
-    lcl_validator=>validate_params( iv_filename        = gv_file
-                                    is_obj             = gs_obj
-                                    iv_skip_file_check = p_down ).
+    loop at gt_targets assigning <g_target>.
+      if <g_target>-w3key-objid is initial and <g_target>-filename is initial.
+        delete gt_targets index sy-tabix.
+        continue.
+      endif.
 
-    gv_msg = |Run parameters: object = { gs_obj-relid } { gs_obj-objid }, filename = { gv_file }|.
-    write: / gv_msg.
+      lcl_validator=>normalize_filename(
+        exporting iv_filename  = <g_target>-filename
+        importing ev_filename  = <g_target>-filename
+                  ev_directory = <g_target>-directory ).
+
+      lcl_validator=>validate_params(
+        iv_filename        = <g_target>-directory && <g_target>-filename
+        is_w3key           = <g_target>-w3key
+        iv_skip_file_check = p_down ).
+    endloop.
+
+    if lines( gt_targets ) = 0.
+      message 'Please specify at least one target pair' type 'E'.
+    endif.
 
     if p_upl is not initial.
-      lcl_resource_updater=>upload_file(
-        iv_filename = gv_file
-        is_object   = gs_obj ).
-      write: / 'Initial action: File uploaded to the system'.
+      loop at gt_targets assigning <g_target>.
+        lcl_w3mi_storage=>upload(
+          iv_filename = <g_target>-directory && <g_target>-filename
+          is_w3key    = <g_target>-w3key ).
+      endloop.
+      write: / 'Initial action:' color 7, 'Files uploaded to the system'.
     elseif p_down is not initial.
-      lcl_resource_updater=>download_file(
-        iv_filename = gv_file
-        is_object   = gs_obj ).
-      write: / 'Initial action: File downloaded to the frontend'.
+      loop at gt_targets assigning <g_target>.
+        lcl_w3mi_storage=>download(
+          iv_filename = <g_target>-directory && <g_target>-filename
+          is_w3key    = <g_target>-w3key ).
+      endloop.
+      write: / 'Initial action:' color 7, 'Files downloaded to the frontend'.
     endif.
 
     create object go_poller
       exporting
-        iv_filename = gv_file
-        is_obj      = gs_obj
+        it_targets  = gt_targets
         iv_interval = 1. " 1 sec
 
     go_poller->start( ).
