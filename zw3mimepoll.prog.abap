@@ -476,12 +476,14 @@ class lcl_poller implementation.
   method handle_timer.
 
     data: ls_attr type ty_file_attr,
+          lv_idx  type char10,
           lv_msg  type string,
           lx type ref to lcx_error.
 
     field-symbols: <target> like line of mt_targets.
 
     loop at mt_targets assigning <target>.
+      lv_idx = sy-tabix.
 
       try.
         ls_attr = read_attributes(
@@ -492,8 +494,8 @@ class lcl_poller implementation.
       endtry.
 
       if <target>-timestamp < ls_attr-stamp.
-        lv_msg = |File changed: { <target>-directory && <target>-filename
-                 } [{ format_dt( ls_attr ) }]|.
+        lv_msg = |File changed: { <target>-filename } ({
+                  condense( lv_idx ) }) [{ format_dt( ls_attr ) }]|.
         write / lv_msg.
 
         <target>-timestamp = ls_attr-stamp.
