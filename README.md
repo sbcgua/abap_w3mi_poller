@@ -2,6 +2,8 @@
 A tool to poll file change and upload changed files automatically as W3MI object.
 Created mainly to simplify CSS editing in https://github.com/larshp/abapGit, but can be used for other purpose too.
 
+![logo](https://github.com/sbcgua/abap_w3mi_poller/wiki/img/w3mipoller-logo.png)
+
 ## Installation
 
 * The best option to install is to clone the repository to your SAP system using [abapGit](https://github.com/larshp/abapGit) tool.
