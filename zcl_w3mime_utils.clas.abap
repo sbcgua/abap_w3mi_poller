@@ -34,7 +34,7 @@ method download.
         lv_size type i.
 
   if abap_false = zcl_w3mime_storage=>check_obj_exists( iv_type = iv_type iv_key = iv_key ).
-    zcx_w3mime_error=>raise( 'MIME object does not exist' ).
+    zcx_w3mime_error=>raise( 'MIME object does not exist' ). "#EC NOTEXT
   endif.
 
   zcl_w3mime_storage=>read_object(
@@ -61,7 +61,7 @@ method upload.
         lv_size type i.
 
   if abap_false = zcl_w3mime_storage=>check_obj_exists( iv_type = iv_type iv_key = iv_key ).
-    zcx_w3mime_error=>raise( 'MIME object does not exist' ).
+    zcx_w3mime_error=>raise( 'MIME object does not exist' ). "#EC NOTEXT
   endif.
 
   zcl_w3mime_fs=>read_file(

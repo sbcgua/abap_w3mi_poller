@@ -84,7 +84,7 @@ method get_object_info.
     and   srtf2 = 0.
 
   if sy-subrc > 0.
-    zcx_w3mime_error=>raise( 'Cannot read W3xx info' ).
+    zcx_w3mime_error=>raise( 'Cannot read W3xx info' ). "#EC NOTEXT
   endif.
 
 endmethod.  " get_object_info.
@@ -108,7 +108,7 @@ method read_object.
       others = 1.
 
   if sy-subrc > 0.
-    zcx_w3mime_error=>raise( 'Cannot read W3xx filesize parameter' ).
+    zcx_w3mime_error=>raise( 'Cannot read W3xx filesize parameter' ). "#EC NOTEXT
   endif.
 
   ev_size         = lv_value.
@@ -122,10 +122,10 @@ method read_object.
       mime              = et_data
     exceptions
       wrong_object_type = 1
-      export_error      = 2.
+      import_error      = 2.
 
   if sy-subrc > 0.
-    zcx_w3mime_error=>raise( 'Cannot upload W3xx data' ).
+    zcx_w3mime_error=>raise( 'Cannot upload W3xx data' ). "#EC NOTEXT
   endif.
 
 endmethod.  " read_object.
@@ -170,10 +170,10 @@ method update_object.
     exporting
       params = ls_param
     exceptions
-      other = 1.
+      others = 1.
 
   if sy-subrc > 0.
-    zcx_w3mime_error=>raise( 'Cannot upload W3xx data' ).
+    zcx_w3mime_error=>raise( 'Cannot upload W3xx data' ). "#EC NOTEXT
   endif.
 
   ls_object = get_object_info( iv_key = iv_key iv_type = iv_type ).
@@ -191,7 +191,7 @@ method update_object.
       export_error      = 2.
 
   if sy-subrc > 0.
-    zcx_w3mime_error=>raise( 'Cannot upload W3xx data' ).
+    zcx_w3mime_error=>raise( 'Cannot upload W3xx data' ). "#EC NOTEXT
   endif.
 
 endmethod.  " update_object.

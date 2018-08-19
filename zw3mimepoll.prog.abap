@@ -35,11 +35,11 @@ class lcl_validator implementation.
 
     if iv_skip_file_check is initial
        and abap_false = cl_gui_frontend_services=>file_exist( iv_filename ).
-      zcx_w3mime_error=>raise( 'File does not exist' ).
+      zcx_w3mime_error=>raise( 'File does not exist' ). "#EC NOTEXT
     endif.
 
     if abap_false = zcl_w3mime_storage=>check_obj_exists( iv_type = is_w3key-relid iv_key = is_w3key-objid ).
-      zcx_w3mime_error=>raise( 'MIME object does not exist' ).
+      zcx_w3mime_error=>raise( 'MIME object does not exist' ). "#EC NOTEXT
     endif.
 
   endmethod.  " validate_params.
@@ -54,15 +54,11 @@ class lcl_poller definition final.
   public section.
 
     types:
-      begin of ty_file_attr,
-        mdate type dats,
-        mtime type tims,
-        stamp type timestamp,
-      end of ty_file_attr,
       begin of ty_poll_target,
-        w3key     type ty_w3obj_key,
+        path      type string,
         filename  type string,
         directory type string,
+        w3key     type ty_w3obj_key,
         timestamp type timestamp,
       end of ty_poll_target,
       tt_poll_targets type standard table of ty_poll_target with default key.
@@ -73,158 +69,179 @@ class lcl_poller definition final.
         it_targets  type tt_poll_targets
       raising zcx_w3mime_error.
 
-    methods start.
-    methods handle_timer for event finished of cl_gui_timer.
+    methods start
+      raising zcx_w3mime_error.
+
+    methods handle_changed for event changed of zcl_w3mime_poller importing changed_list.
+    methods handle_error for event error of zcl_w3mime_poller importing error_text.
 
     class-methods format_dt
-      importing is_attr       type ty_file_attr
+      importing iv_ts       type timestamp
       returning value(rv_str) type string.
 
   private section.
 
-    data: mo_timer   type ref to cl_gui_timer,
+    data: mo_poller  type ref to zcl_w3mime_poller,
           mt_targets type tt_poll_targets.
-
-    methods read_attributes
-      importing
-        iv_dir  type string
-        iv_file type string
-      returning value(rv_attr) type ty_file_attr
-      raising zcx_w3mime_error.
 
 endclass.   "lcl_poller
 
 class lcl_poller implementation.
 
   method format_dt.
-    rv_str = |{ is_attr-mdate+0(4) }-{ is_attr-mdate+4(2) }-{ is_attr-mdate+6(2) } |
-          && |{ is_attr-mtime+0(2) }:{ is_attr-mtime+2(2) }:{ is_attr-mtime+4(2) }|.
+    data ts type char14.
+    ts = iv_ts.
+
+    rv_str = |{ ts+0(4) }-{ ts+4(2) }-{ ts+6(2) } |
+          && |{ ts+8(2) }:{ ts+10(2) }:{ ts+12(2) }|.
+
   endmethod.  " format_dt.
 
   method constructor.
 
     data:
-          ls_attr type ty_file_attr,
+          lt_file_targets type zcl_w3mime_poller=>tt_target,
           lv_idx  type char10,
           lv_msg  type string.
 
-    field-symbols: <target> like line of mt_targets.
+    field-symbols: <t> like line of mt_targets.
+    field-symbols: <ft> like line of lt_file_targets.
 
     if lines( it_targets ) = 0.
-      zcx_w3mime_error=>raise( 'Specify poll targets' ).
+      zcx_w3mime_error=>raise( 'Specify poll targets' ). "#EC NOTEXT
     endif.
+
     mt_targets = it_targets.
+    write / 'Targets:'. "#EC NOTEXT
 
-    write / 'Targets:'.
-
-    loop at mt_targets assigning <target>.
+    loop at mt_targets assigning <t>.
       lv_idx = sy-tabix.
 
       lcl_validator=>validate_params(
-        iv_filename = <target>-directory && <target>-filename
-        is_w3key    = <target>-w3key ).
+        iv_filename = <t>-path
+        is_w3key    = <t>-w3key ).
 
-      ls_attr = read_attributes(
-        iv_dir  = <target>-directory
-        iv_file = <target>-filename ).
+      zcl_w3mime_fs=>resolve_filename(
+        exporting iv_path      = <t>-path
+        importing ev_filename  = <t>-filename
+                  ev_directory = <t>-directory ).
 
-      <target>-timestamp = ls_attr-stamp.
-
-      lv_msg = |  ({ condense( lv_idx ) }): {
-               <target>-w3key-objid } [{ <target>-w3key-relid
-               }] <=> { <target>-directory && <target>-filename
-               } [{ format_dt( ls_attr ) }]|.
+      lv_msg = |  ({ condense( lv_idx ) }):|
+        && | { <t>-w3key-objid } [{ <t>-w3key-relid }]|
+        && | <=> { <t>-path }|. " format_dt( ls_attr ) }]|.
       write / lv_msg.
+
+      append initial line to lt_file_targets assigning <ft>.
+      <ft>-directory = <t>-directory.
+      <ft>-filter    = <t>-filename.
 
     endloop.
 
-    write / 'Staring polling ...'.
+    write / 'Staring polling ...'. "#EC NOTEXT
     uline.
-    create object mo_timer.
-    set handler me->handle_timer for mo_timer.
-    mo_timer->interval = iv_interval.
+    create object mo_poller
+      exporting
+        it_targets  = lt_file_targets
+        iv_interval = iv_interval.
+    set handler me->handle_changed for mo_poller.
+    set handler me->handle_error for mo_poller.
 
   endmethod.  " constructor.
 
-  method read_attributes.
-
-    data:
-          lt_files type standard table of file_info.
-
-    field-symbols <file> like line of lt_files.
-
-    lt_files = zcl_w3mime_fs=>read_dir(
-      iv_dir    = iv_dir
-      iv_filter = iv_file ).
-
-    read table lt_files assigning <file> index 1.
-    if sy-subrc > 0.
-      zcx_w3mime_error=>raise( 'Cannot get file attributes' ).
-    endif.
-
-    rv_attr-mdate = <file>-writedate.
-    rv_attr-mtime = <file>-writetime.
-
-    cl_abap_tstmp=>systemtstmp_syst2utc(
-      exporting
-        syst_date = rv_attr-mdate
-        syst_time = rv_attr-mtime
-      importing
-        utc_tstmp = rv_attr-stamp ).
-
-  endmethod.  " read_attributes.
-
   method start.
-
-    mo_timer->run( ).
-
+    mo_poller->start( ).
   endmethod.  "start.
 
-  method handle_timer.
-
-    data: ls_attr type ty_file_attr,
-          lv_idx  type char10,
+  method handle_changed.
+    data:
           lv_msg  type string,
           lx type ref to zcx_w3mime_error.
 
-    field-symbols: <target> like line of mt_targets.
+    field-symbols <i> like line of changed_list.
+    field-symbols <t> like line of mt_targets.
 
-    loop at mt_targets assigning <target>.
-      lv_idx = sy-tabix.
+    loop at changed_list assigning <i>.
+      read table mt_targets assigning <t> with key path = <i>-path.
+      assert sy-subrc is initial.
+
+      lv_msg = |File changed: { <t>-filename } [{ format_dt( <i>-timestamp ) }]|.
+      write / lv_msg.
 
       try.
-        ls_attr = read_attributes(
-          iv_dir  = <target>-directory
-          iv_file = <target>-filename ).
+        zcl_w3mime_utils=>upload(
+          iv_filename = <t>-path
+          iv_type     = <t>-w3key-relid
+          iv_key      = <t>-w3key-objid ).
       catch zcx_w3mime_error into lx.
         message lx->msg type 'E'.
       endtry.
-
-      if <target>-timestamp < ls_attr-stamp.
-        lv_msg = |File changed: { <target>-filename } ({
-                  condense( lv_idx ) }) [{ format_dt( ls_attr ) }]|.
-        write / lv_msg.
-
-        <target>-timestamp = ls_attr-stamp.
-
-        try.
-          zcl_w3mime_utils=>upload(
-            iv_filename = <target>-directory && <target>-filename
-            iv_type = <target>-w3key-relid
-            iv_key  = <target>-w3key-objid ).
-        catch zcx_w3mime_error into lx.
-          message lx->msg type 'E'.
-        endtry.
-
-      endif.
-
     endloop.
 
-    mo_timer->run( ).
+  endmethod.  "handle_changed
 
-  endmethod.  "handle_timer
+  method handle_error.
+    message error_text type 'E'.
+  endmethod.  " handle_error.
 
 endclass. " lcl_poller
+
+*&---------------------------------------------------------------------*
+*& lcl_app
+*&---------------------------------------------------------------------*
+
+class lcl_app definition final.
+  public section.
+    class-methods run
+      importing
+        it_targets  type lcl_poller=>tt_poll_targets
+        do_download type abap_bool
+        do_upload   type abap_bool
+      raising zcx_w3mime_error.
+endclass.
+
+class lcl_app implementation.
+
+  method run.
+    if lines( it_targets ) = 0.
+      message 'Please specify at least one target pair' type 'E'. "#EC NOTEXT
+    endif.
+
+    field-symbols <t> like line of it_targets.
+    loop at it_targets assigning <t>.
+      lcl_validator=>validate_params(
+        iv_filename        = <t>-path
+        is_w3key           = <t>-w3key
+        iv_skip_file_check = boolc( do_download = abap_true ) ).
+    endloop.
+
+    if do_upload is not initial.
+      loop at it_targets assigning <t>.
+        zcl_w3mime_utils=>upload(
+          iv_filename = <t>-path
+          iv_type     = <t>-w3key-relid
+          iv_key      = <t>-w3key-objid ).
+      endloop.
+      write: / 'Initial action:' color 7, 'Files uploaded to the system'. "#EC NOTEXT
+    elseif do_download is not initial.
+      loop at it_targets assigning <t>.
+        zcl_w3mime_utils=>download(
+          iv_filename = <t>-path
+          iv_type     = <t>-w3key-relid
+          iv_key      = <t>-w3key-objid ).
+      endloop.
+      write: / 'Initial action:' color 7, 'Files downloaded to the frontend'. "#EC NOTEXT
+    endif.
+
+    data lo_poller type ref to lcl_poller.
+    create object lo_poller
+      exporting
+        it_targets  = it_targets
+        iv_interval = 1. " 1 sec
+    lo_poller->start( ).
+
+  endmethod.  " run.
+
+endclass.
 
 **********************************************************************
 
@@ -333,9 +350,7 @@ at selection-screen.
 start-of-selection.
 
   data:
-        go_poller  type ref to lcl_poller,
         gt_targets type lcl_poller=>tt_poll_targets,
-        gv_msg     type string,
         gx         type ref to zcx_w3mime_error.
 
   field-symbols <g_target> like line of gt_targets.
@@ -343,66 +358,24 @@ start-of-selection.
   append initial line to gt_targets assigning <g_target>.
   <g_target>-w3key-relid = 'MI'. " Fix to mime for the moment
   <g_target>-w3key-objid = p_obj1.
-  <g_target>-filename    = p_file1.
+  <g_target>-path        = p_file1.
 
   append initial line to gt_targets assigning <g_target>.
   <g_target>-w3key-relid = 'MI'. " Fix to mime for the moment
   <g_target>-w3key-objid = p_obj2.
-  <g_target>-filename    = p_file2.
+  <g_target>-path        = p_file2.
 
   append initial line to gt_targets assigning <g_target>.
   <g_target>-w3key-relid = 'MI'. " Fix to mime for the moment
   <g_target>-w3key-objid = p_obj3.
-  <g_target>-filename    = p_file3.
+  <g_target>-path        = p_file3.
 
   try.
-
-    loop at gt_targets assigning <g_target>.
-      if <g_target>-w3key-objid is initial and <g_target>-filename is initial.
-        delete gt_targets index sy-tabix.
-        continue.
-      endif.
-
-      zcl_w3mime_fs=>resolve_filename(
-        exporting iv_path      = <g_target>-filename
-        importing ev_filename  = <g_target>-filename
-                  ev_directory = <g_target>-directory ).
-
-      lcl_validator=>validate_params(
-        iv_filename        = <g_target>-directory && <g_target>-filename
-        is_w3key           = <g_target>-w3key
-        iv_skip_file_check = p_down ).
-    endloop.
-
-    if lines( gt_targets ) = 0.
-      message 'Please specify at least one target pair' type 'E'.
-    endif.
-
-    if p_upl is not initial.
-      loop at gt_targets assigning <g_target>.
-        zcl_w3mime_utils=>upload(
-          iv_filename = <g_target>-directory && <g_target>-filename
-          iv_type = <g_target>-w3key-relid
-          iv_key  = <g_target>-w3key-objid ).
-      endloop.
-      write: / 'Initial action:' color 7, 'Files uploaded to the system'.
-    elseif p_down is not initial.
-      loop at gt_targets assigning <g_target>.
-        zcl_w3mime_utils=>download(
-          iv_filename = <g_target>-directory && <g_target>-filename
-          iv_type = <g_target>-w3key-relid
-          iv_key  = <g_target>-w3key-objid ).
-      endloop.
-      write: / 'Initial action:' color 7, 'Files downloaded to the frontend'.
-    endif.
-
-    create object go_poller
-      exporting
-        it_targets  = gt_targets
-        iv_interval = 1. " 1 sec
-
-    go_poller->start( ).
-
+    delete gt_targets where w3key-objid is initial and path is initial.
+    lcl_app=>run(
+      it_targets  = gt_targets
+      do_upload   = p_upl
+      do_download = p_down ).
   catch zcx_w3mime_error into gx.
     message gx->msg type 'E'.
   endtry.

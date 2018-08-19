@@ -3,19 +3,19 @@ class lcl_fs_test definition final for testing
   risk level harmless.
 
   private section.
-    methods parse_filename for testing.
+    methods parse_path for testing.
     methods resolve_filename for testing.
 endclass.
 
 class lcl_fs_test implementation.
 
-  method parse_filename.
+  method parse_path.
     data:
           lv_filename type string,
           lv_directory type string,
           lv_extension type string.
 
-    zcl_w3mime_fs=>parse_filename(
+    zcl_w3mime_fs=>parse_path(
       exporting
         iv_path = 'c:\tmp\test.txt'
       importing
@@ -27,7 +27,7 @@ class lcl_fs_test implementation.
     cl_abap_unit_assert=>assert_equals( act = lv_filename  exp = 'test' ).
     cl_abap_unit_assert=>assert_equals( act = lv_extension exp = '.txt' ).
 
-    zcl_w3mime_fs=>parse_filename(
+    zcl_w3mime_fs=>parse_path(
       exporting
         iv_path = 'c:\tmp\'
       importing
@@ -39,7 +39,7 @@ class lcl_fs_test implementation.
     cl_abap_unit_assert=>assert_equals( act = lv_filename  exp = '' ).
     cl_abap_unit_assert=>assert_equals( act = lv_extension exp = '' ).
 
-    zcl_w3mime_fs=>parse_filename(
+    zcl_w3mime_fs=>parse_path(
       exporting
         iv_path = 'c:\tmp\test'
       importing
@@ -51,7 +51,7 @@ class lcl_fs_test implementation.
     cl_abap_unit_assert=>assert_equals( act = lv_filename  exp = 'test' ).
     cl_abap_unit_assert=>assert_equals( act = lv_extension exp = '' ).
 
-    zcl_w3mime_fs=>parse_filename(
+    zcl_w3mime_fs=>parse_path(
       exporting
         iv_path = 'test.txt'
       importing
@@ -63,7 +63,7 @@ class lcl_fs_test implementation.
     cl_abap_unit_assert=>assert_equals( act = lv_filename  exp = 'test' ).
     cl_abap_unit_assert=>assert_equals( act = lv_extension exp = '.txt' ).
 
-  endmethod.  " parse_filename.
+  endmethod.  " parse_path.
 
   method resolve_filename.
     data:

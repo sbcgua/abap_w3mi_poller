@@ -37,7 +37,7 @@ public section.
       !IV_DATA type XSTRING
     raising
       ZCX_W3MIME_ERROR .
-  class-methods PARSE_FILENAME
+  class-methods PARSE_PATH
     importing
       value(IV_PATH) type STRING
     exporting
@@ -69,7 +69,7 @@ ENDCLASS.
 CLASS ZCL_W3MIME_FS IMPLEMENTATION.
 
 
-method parse_filename.
+method PARSE_PATH.
   data:
         lv_offs type i,
         lv_sep  type c.
@@ -99,7 +99,7 @@ method parse_filename.
     ev_filename  = substring( val = ev_filename len = lv_offs ).
   endif.
 
-endmethod.  " parse_filename.
+endmethod. "#EC CI_VALPAR
 
 
 method read_dir.
@@ -114,7 +114,7 @@ method read_dir.
     exceptions others    = 4 ).
 
   if sy-subrc is not initial.
-    zcx_w3mime_error=>raise( 'Cannot read directory' ).
+    zcx_w3mime_error=>raise( 'Cannot read directory' ). "#EC NOTEXT
   endif.
 
 endmethod.  " read_dir.
@@ -135,7 +135,7 @@ method read_file.
       others     = 1 ).
 
   if sy-subrc > 0.
-    zcx_w3mime_error=>raise( 'Cannot read file' ).
+    zcx_w3mime_error=>raise( 'Cannot read file' ). "#EC NOTEXT
   endif.
 
 endmethod.  " read_file.
@@ -169,7 +169,7 @@ method resolve_filename.
         lv_sep       type c,
         lv_extension type string.
 
-  parse_filename(
+  parse_path(
     exporting
       iv_path = iv_path
     importing
@@ -179,7 +179,7 @@ method resolve_filename.
 
   ev_filename = ev_filename && lv_extension.
   if strlen( ev_filename ) = 0.
-    zcx_w3mime_error=>raise( 'Cannot resolve filename' ).
+    zcx_w3mime_error=>raise( 'Cannot resolve filename' ). "#EC NOTEXT
   endif.
 
   if ev_directory is initial.
@@ -188,7 +188,7 @@ method resolve_filename.
     ev_directory = ev_directory && lv_sep.
   endif.
 
-endmethod.  " resolve_filename.
+endmethod.  "#EC CI_VALPAR
 
 
 method write_file.
@@ -204,7 +204,7 @@ method write_file.
       others     = 1 ).
 
   if sy-subrc > 0.
-    zcx_w3mime_error=>raise( 'Cannot read file' ).
+    zcx_w3mime_error=>raise( 'Cannot write file' ). "#EC NOTEXT
   endif.
 
 endmethod.  " write_file.
