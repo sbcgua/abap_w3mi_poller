@@ -76,7 +76,7 @@ class lcl_poller definition final.
     methods handle_error for event error of zcl_w3mime_poller importing error_text.
 
     class-methods format_dt
-      importing iv_ts       type timestamp
+      importing iv_ts         type zcl_w3mime_poller=>ty_file_state-timestamp
       returning value(rv_str) type string.
 
   private section.

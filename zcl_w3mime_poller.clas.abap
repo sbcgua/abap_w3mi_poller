@@ -14,8 +14,8 @@ public section.
     tt_target type standard table of ty_target with default key .
   types:
     begin of ty_file_state,
-      path type string,
-      timestamp type timestamp,
+      path      type string,
+      timestamp type char14,
     end of ty_file_state .
   types:
     tt_file_state type standard table of ty_file_state with key path .
@@ -163,13 +163,13 @@ method read_current_state.
     loop at lt_files assigning <file> where isdir is initial.
       append initial line to rt_state assigning <state>.
       <state>-path = <t>-directory && <file>-filename.
-
-      cl_abap_tstmp=>systemtstmp_syst2utc(
-        exporting
-          syst_date = <file>-writedate
-          syst_time = <file>-writetime
-        importing
-          utc_tstmp = <state>-timestamp ).
+      concatenate <file>-writedate <file>-writetime into <state>-timestamp. " Hmmm
+*      cl_abap_tstmp=>systemtstmp_syst2utc(
+*        exporting
+*          syst_date = <file>-writedate
+*          syst_time = <file>-writetime
+*        importing
+*          utc_tstmp = <state>-timestamp ).
     endloop.
   endloop.
 
