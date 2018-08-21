@@ -8,6 +8,8 @@ public section.
   types:
     tt_files type standard table of file_info with key filename .
 
+  class-data C_SEP type CHAR1 read-only .
+
   class-methods READ_FILE
     importing
       !IV_FILENAME type STRING
@@ -60,6 +62,13 @@ public section.
       value(RT_FILES) type TT_FILES
     raising
       ZCX_W3MIME_ERROR .
+  class-methods JOIN_PATH
+    importing
+      !IV_P1 type STRING
+      !IV_P2 type STRING
+    returning
+      value(RT_JOINED) type STRING .
+  class-methods CLASS_CONSTRUCTOR .
 protected section.
 private section.
 ENDCLASS.
@@ -69,19 +78,39 @@ ENDCLASS.
 CLASS ZCL_W3MIME_FS IMPLEMENTATION.
 
 
+method class_constructor.
+  cl_gui_frontend_services=>get_file_separator( changing file_separator = c_sep ).
+endmethod.
+
+
+method join_path.
+  " Does not support .. at the moment
+
+  if iv_p1 is not initial.
+    rt_joined = iv_p1.
+  endif.
+
+  if iv_p2 is not initial.
+    if rt_joined is not initial and substring( val = rt_joined off = strlen( rt_joined ) - 1 len = 1 ) <> c_sep.
+      rt_joined = rt_joined && c_sep.
+    endif.
+
+    rt_joined = rt_joined && iv_p2.
+  endif.
+
+endmethod.
+
+
 method PARSE_PATH.
   data:
-        lv_offs type i,
-        lv_sep  type c.
+        lv_offs type i.
 
   clear: ev_filename, ev_extension, ev_directory.
   if strlen( iv_path ) = 0.
     return.
   endif.
 
-  cl_gui_frontend_services=>get_file_separator( changing file_separator = lv_sep ).
-
-  find first occurrence of lv_sep in reverse( iv_path ) match offset lv_offs.
+  find first occurrence of c_sep in reverse( iv_path ) match offset lv_offs.
 
   if sy-subrc = 0.
     lv_offs      = strlen( iv_path ) - lv_offs.
@@ -183,9 +212,8 @@ method resolve_filename.
   endif.
 
   if ev_directory is initial.
-    cl_gui_frontend_services=>get_file_separator( changing file_separator = lv_sep ).
     cl_gui_frontend_services=>get_sapgui_workdir( changing sapworkdir = ev_directory ).
-    ev_directory = ev_directory && lv_sep.
+    ev_directory = ev_directory && c_sep.
   endif.
 
 endmethod.  "#EC CI_VALPAR

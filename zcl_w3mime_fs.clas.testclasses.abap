@@ -5,6 +5,7 @@ class lcl_fs_test definition final for testing
   private section.
     methods parse_path for testing.
     methods resolve_filename for testing.
+    methods join_path for testing.
 endclass.
 
 class lcl_fs_test implementation.
@@ -93,7 +94,16 @@ class lcl_fs_test implementation.
       cl_abap_unit_assert=>fail( 'Unexpected error' ).
     endtry.
 
-
   endmethod. " resolve_filename.
+
+  method join_path.
+
+    data lv_act type string.
+
+    lv_act = zcl_w3mime_fs=>join_path( iv_p1 = 'c:\tmp' iv_p2 = 'test' ).
+
+    cl_abap_unit_assert=>assert_equals( act = lv_act  exp = 'c:\tmp\test' ).
+
+  endmethod.  " join_path.
 
 endclass.
