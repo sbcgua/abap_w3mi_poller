@@ -385,75 +385,15 @@ start-of-selection.
 **********************************************************************
 
 form f4_file_path changing c_path type char255.
-
-  data:
-        lt_files type filetable,
-        lv_rc    type i,
-        lv_uact  type i.
-
-  field-symbols <file> like line of lt_files.
-
-  cl_gui_frontend_services=>file_open_dialog(
-    changing
-      file_table  = lt_files
-      rc          = lv_rc
-      user_action = lv_uact
-    exceptions others = 4 ).
-
-  if sy-subrc > 0 OR lv_uact <> cl_gui_frontend_services=>action_ok.
-    return.
-  endif.
-
-  read table lt_files assigning <file> index 1.
-  if sy-subrc = 0.
-    c_path = <file>-filename.
+  c_path = zcl_w3mime_fs=>choose_file_dialog( ).
+  if c_path is not initial.
     set parameter id GC_FILE_PARAM_NAME field c_path.
   endif.
-
 endform.                    "set_file_path
 
-*&---------------------------------------------------------------------*
-*&      Form  set_mime_path
-*&---------------------------------------------------------------------*
 form f4_mime_path changing c_path.
-
-  types:
-    begin of t_w3head,
-      objid type wwwdata-objid,
-      text  type wwwdata-text,
-    end of t_w3head.
-
-  data:
-        ls_return type ddshretval,
-        lt_data   type standard table of t_w3head,
-        lt_return type standard table of ddshretval.
-
-  select distinct objid text from wwwdata
-    into corresponding fields of table lt_data
-    where relid = 'MI'
-    and   objid like 'Z%'
-    order by objid.
-
-  call function 'F4IF_INT_TABLE_VALUE_REQUEST'
-    exporting
-      retfield        = 'OBJID'
-      dynprofield     = 'P_MPATH'
-      value_org       = 'S'
-    tables
-      value_tab       = lt_data
-      return_tab      = lt_return
-    exceptions
-      parameter_error = 1
-      no_values_found = 2
-      others          = 3.
-
-  if sy-subrc is not initial.
-    message id sy-msgid type sy-msgty number sy-msgno
-            with sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  c_path = zcl_w3mime_storage=>choose_mime_dialog( ).
+  if c_path is not initial.
+    set parameter id GC_OBJ_PARAM_NAME field c_path.
   endif.
-
-  read table lt_return into ls_return index 1.
-  c_path = ls_return-fieldval.
-  set parameter id GC_OBJ_PARAM_NAME field ls_return-fieldval.
-
 endform.                    "set_mime_path

@@ -10,6 +10,12 @@ public section.
 
   class-data C_SEP type CHAR1 read-only .
 
+  class-methods CHOOSE_DIR_DIALOG
+    returning
+      value(RV_PATH) type CHAR255 .
+  class-methods CHOOSE_FILE_DIALOG
+    returning
+      value(RV_PATH) type CHAR255 .
   class-methods READ_FILE
     importing
       !IV_FILENAME type STRING
@@ -76,6 +82,52 @@ ENDCLASS.
 
 
 CLASS ZCL_W3MIME_FS IMPLEMENTATION.
+
+
+method CHOOSE_DIR_DIALOG.
+  data l_str type string.
+
+  cl_gui_frontend_services=>directory_browse(
+    changing
+      selected_folder      = l_str
+    exceptions
+      cntl_error           = 1
+      error_no_gui         = 2
+      not_supported_by_gui = 3
+      others               = 4 ).
+
+  if sy-subrc is initial.
+    rv_path = l_str.
+  endif.
+
+endmethod.
+
+
+method choose_file_dialog.
+  data:
+        lt_files type filetable,
+        lv_rc    type i,
+        lv_uact  type i.
+
+  field-symbols <file> like line of lt_files.
+
+  cl_gui_frontend_services=>file_open_dialog(
+    changing
+      file_table  = lt_files
+      rc          = lv_rc
+      user_action = lv_uact
+    exceptions others = 4 ).
+
+  if sy-subrc > 0 OR lv_uact <> cl_gui_frontend_services=>action_ok.
+    return. " Empty value
+  endif.
+
+  read table lt_files assigning <file> index 1.
+  if sy-subrc = 0.
+    rv_path = <file>-filename.
+  endif.
+
+endmethod.
 
 
 method class_constructor.

@@ -51,6 +51,9 @@ public section.
       !IV_DATA type XSTRING
     raising
       ZCX_W3MIME_ERROR .
+  class-methods CHOOSE_MIME_DIALOG
+    returning
+      value(RV_OBJ_NAME) type SHVALUE_D .
 protected section.
 private section.
 ENDCLASS.
@@ -73,6 +76,47 @@ method check_obj_exists.
   rv_yes = boolc( sy-subrc = 0 ).
 
 endmethod.  " check_obj_exists.
+
+
+method choose_mime_dialog.
+
+  types:
+    begin of t_w3head,
+      objid type wwwdata-objid,
+      text  type wwwdata-text,
+    end of t_w3head.
+
+  data:
+        ls_return type ddshretval,
+        lt_data   type standard table of t_w3head,
+        lt_return type standard table of ddshretval.
+
+  select distinct objid text from wwwdata
+    into corresponding fields of table lt_data
+    where relid = 'MI'
+    and   objid like 'Z%'
+    order by objid.
+
+  call function 'F4IF_INT_TABLE_VALUE_REQUEST'
+    exporting
+      retfield        = 'OBJID'
+      value_org       = 'S'
+    tables
+      value_tab       = lt_data
+      return_tab      = lt_return
+    exceptions
+      parameter_error = 1
+      no_values_found = 2
+      others          = 3.
+
+  if sy-subrc is not initial.
+    return. " Empty value
+  endif.
+
+  read table lt_return into ls_return index 1. " fail is ok => empty return
+  rv_obj_name = ls_return-fieldval.
+
+endmethod.
 
 
 method get_object_info.
