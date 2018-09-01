@@ -15,6 +15,14 @@
     <UNICODE>X</UNICODE>
     <WITH_UNIT_TESTS>X</WITH_UNIT_TESTS>
    </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_W3MIME_ZIP_WRITER</CLSNAME>
+     <CMPNAME>MO_CONV_IN</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Code Page and Endian Conversion (External -&gt; System Format)</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
   </asx:values>
  </asx:abap>
 </abapGit>
