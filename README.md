@@ -33,7 +33,10 @@ The package contains several useful routines grouped into classes. All routines 
   - `read_file(_x)`, `write_file(_x)` - quick wrapper to read/write a file, raw255 and xstring versions respectfully
   - `parse_path` - split path into directory, filename and extension
   - `resolve_filename` - split path into directory and filename, if no directory - fallback to SAP GUI default path
-  - `join_path` - join 2 path parts e.g. directory and filename, respecting separators (but ignoring `..` at the moment)
+  - `path_join` - join 2 path parts e.g. directory and filename, respecting separators (but ignoring `..` at the moment)
+  - `path_is_relative` - detects if one path is relative to the other (but ignoring `..` at the moment)
+  - `path_relative` - calculates the difference between 2 paths (but ignoring `..` at the moment)
+  - `path_ensure_dir_tail` - ensures dir ends with separator symbol
 - zcl_w3mime_utils
   - `download` - save W3MIME object directly to file
   - `upload` - vice versa
@@ -41,3 +44,9 @@ The package contains several useful routines grouped into classes. All routines 
   - most complex wrapper. Polls directory (can be multiple) once per given period of time for file changes. If detected fires `changed` event with changed file list.
   - Usage: `construct` the object (this one is not static) giving the target list and timer interval, assign the event handler to `changed` (and to `error` optionally), `start` the poller.
   - see `zw3mimepoll` program if you are looking for an example. see `lcl_poller` class implementation - it contains concrete handling of a more abstract `zcl_w3mime_poller` tool
+- zcl_w3mime_zip_writer
+  - a wrapper around `cl_abap_zip`.
+  - `has` - checks of the file exists in zip
+  - `add(x), read(x)` - reads write data from zip, methods without `x` convert the data to string based on encoding specified during instantiation
+  - `get_blob` - returns xstring of current zip state
+  - `is_dirty` - tracks if there has been any changes since last `get_blob`. (`add` sets the flag, `get_blob` releases it).
