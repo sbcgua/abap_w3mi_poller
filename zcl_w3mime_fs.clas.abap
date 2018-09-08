@@ -68,13 +68,30 @@ public section.
       value(RT_FILES) type TT_FILES
     raising
       ZCX_W3MIME_ERROR .
-  class-methods JOIN_PATH
+  class-methods PATH_JOIN
     importing
       !IV_P1 type STRING
       !IV_P2 type STRING
     returning
       value(RT_JOINED) type STRING .
+  class-methods PATH_IS_RELATIVE
+    importing
+      !IV_TO type STRING
+      !IV_FROM type STRING
+    returning
+      value(RV_YES) type ABAP_BOOL .
+  class-methods PATH_RELATIVE
+    importing
+      !IV_FROM type STRING
+      !IV_TO type STRING
+    returning
+      value(RV_PATH) type STRING .
   class-methods CLASS_CONSTRUCTOR .
+  class-methods PATH_ENSURE_DIR_TAIL
+    importing
+      !I_PATH type STRING
+    returning
+      value(R_PATH) type STRING .
 protected section.
 private section.
 ENDCLASS.
@@ -84,7 +101,7 @@ ENDCLASS.
 CLASS ZCL_W3MIME_FS IMPLEMENTATION.
 
 
-method CHOOSE_DIR_DIALOG.
+method choose_dir_dialog.
   data l_str type string.
 
   cl_gui_frontend_services=>directory_browse(
@@ -131,29 +148,14 @@ endmethod.
 
 
 method class_constructor.
-  cl_gui_frontend_services=>get_file_separator( changing file_separator = c_sep ).
+  cl_gui_frontend_services=>get_file_separator( changing file_separator = c_sep exceptions others = 4 ).
+  if sy-subrc is not initial.
+    c_sep = '\'. " Assume windows (eclipse ???)
+  endif.
 endmethod.
 
 
-method join_path.
-  " Does not support .. at the moment
-
-  if iv_p1 is not initial.
-    rt_joined = iv_p1.
-  endif.
-
-  if iv_p2 is not initial.
-    if rt_joined is not initial and substring( val = rt_joined off = strlen( rt_joined ) - 1 len = 1 ) <> c_sep.
-      rt_joined = rt_joined && c_sep.
-    endif.
-
-    rt_joined = rt_joined && iv_p2.
-  endif.
-
-endmethod.
-
-
-method PARSE_PATH.
+method parse_path.
   data:
         lv_offs type i.
 
@@ -181,6 +183,53 @@ method PARSE_PATH.
   endif.
 
 endmethod. "#EC CI_VALPAR
+
+
+method path_ensure_dir_tail.
+  r_path = i_path.
+  if r_path is not initial and substring( val = r_path off = strlen( r_path ) - 1 len = 1 ) <> c_sep.
+    r_path = r_path && c_sep.
+  endif.
+endmethod.
+
+
+method path_is_relative.
+  " Does not support .. at the moment
+  data l_offs type i.
+  l_offs = find( val = iv_to sub = iv_from ).
+  rv_yes = boolc( l_offs = 0 ). " Match, starts from start
+endmethod.
+
+
+method path_join.
+  " Does not support .. at the moment
+
+  if iv_p1 is not initial.
+    rt_joined = iv_p1.
+  endif.
+
+  if iv_p2 is not initial.
+    if rt_joined is not initial and substring( val = rt_joined off = strlen( rt_joined ) - 1 len = 1 ) <> c_sep.
+      rt_joined = rt_joined && c_sep.
+    endif.
+
+    rt_joined = rt_joined && iv_p2.
+  endif.
+
+endmethod.
+
+
+method path_relative.
+  " Does not support .. at the moment
+  if path_is_relative( iv_to = iv_to iv_from = iv_from ) = abap_true.
+    rv_path = substring( val = iv_to off = strlen( iv_from ) ).
+    if strlen( rv_path ) > 0 and rv_path+0(1) = c_sep.
+      shift rv_path left by 1 places.
+    endif.
+  else.
+    rv_path = iv_to. " Hmmm, right just for abs path, think how to do it properly
+  endif.
+endmethod.
 
 
 method read_dir.
@@ -264,8 +313,12 @@ method resolve_filename.
   endif.
 
   if ev_directory is initial.
-    cl_gui_frontend_services=>get_sapgui_workdir( changing sapworkdir = ev_directory ).
-    ev_directory = ev_directory && c_sep.
+    cl_gui_frontend_services=>get_sapgui_workdir( changing sapworkdir = ev_directory exceptions others = 4 ).
+    if sy-subrc is initial. " hmmm ? eclipse ?
+      ev_directory = ev_directory && c_sep.
+    else.
+      ev_directory = 'c:\tmp\'. " TODO refactor, hack for eclipse unit test
+    endif.
   endif.
 
 endmethod.  "#EC CI_VALPAR

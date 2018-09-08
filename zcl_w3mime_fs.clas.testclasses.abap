@@ -5,7 +5,10 @@ class lcl_fs_test definition final for testing
   private section.
     methods parse_path for testing.
     methods resolve_filename for testing.
-    methods join_path for testing.
+    methods path_join for testing.
+    methods path_is_relative for testing.
+    methods path_relative for testing.
+    methods path_ensure_dir_tail for testing.
 endclass.
 
 class lcl_fs_test implementation.
@@ -96,14 +99,71 @@ class lcl_fs_test implementation.
 
   endmethod. " resolve_filename.
 
-  method join_path.
+  method path_join.
 
     data lv_act type string.
 
-    lv_act = zcl_w3mime_fs=>join_path( iv_p1 = 'c:\tmp' iv_p2 = 'test' ).
+    lv_act = zcl_w3mime_fs=>path_join( iv_p1 = 'c:\tmp' iv_p2 = 'test' ).
 
     cl_abap_unit_assert=>assert_equals( act = lv_act  exp = 'c:\tmp\test' ).
 
   endmethod.  " join_path.
+
+  method path_is_relative.
+    cl_abap_unit_assert=>assert_true(
+      act = zcl_w3mime_fs=>path_is_relative(
+        iv_from = 'c:'
+        iv_to   = 'c:\tmp' ) ).
+    cl_abap_unit_assert=>assert_true(
+      act = zcl_w3mime_fs=>path_is_relative(
+        iv_from = 'c:\'
+        iv_to   = 'c:\tmp' ) ).
+    cl_abap_unit_assert=>assert_true(
+      act = zcl_w3mime_fs=>path_is_relative(
+        iv_from = 'folder'
+        iv_to   = 'folder\file' ) ).
+    cl_abap_unit_assert=>assert_false(
+      act = zcl_w3mime_fs=>path_is_relative(
+        iv_from = 'c:\tmp'
+        iv_to   = 'c:\sap' ) ).
+
+  endmethod.
+
+  method path_relative.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_w3mime_fs=>path_relative(
+        iv_from   = 'c:'
+        iv_to     = 'c:\tmp' )
+      exp = 'tmp' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_w3mime_fs=>path_relative(
+        iv_from   = 'c:\'
+        iv_to     = 'c:\tmp' )
+      exp = 'tmp' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_w3mime_fs=>path_relative(
+        iv_from   = 'folder'
+        iv_to     = 'folder\file' )
+      exp = 'file' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_w3mime_fs=>path_relative(
+        iv_from   = 'c:\tmp'
+        iv_to     = 'c:\sap' )
+      exp = 'c:\sap' ).
+
+  endmethod.
+
+  method path_ensure_dir_tail.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_w3mime_fs=>path_ensure_dir_tail( 'c:\tmp' )
+      exp = 'c:\tmp\' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_w3mime_fs=>path_ensure_dir_tail( 'c:\tmp\' )
+      exp = 'c:\tmp\' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_w3mime_fs=>path_ensure_dir_tail( '' )
+      exp = '' ).
+
+  endmethod.
 
 endclass.
