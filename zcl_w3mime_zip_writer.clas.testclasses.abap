@@ -42,6 +42,7 @@ class lcl_zip_writer_test implementation.
     create object lo_zipw.
     lo_zipw->add( iv_filename = 'dir/file.txt' iv_data = 'Hello' ).
     lv_xdata = lo_zipw->get_blob( ).
+    cl_abap_unit_assert=>assert_false( lo_zipw->is_dirty( ) ).
 
     create object lo_zip.
     lo_zip->load( zip = lv_xdata ).
@@ -55,7 +56,9 @@ class lcl_zip_writer_test implementation.
     cl_abap_unit_assert=>assert_equals( act = lv_data exp = 'Hello' ).
 
     lo_zipw->add( iv_filename = 'dir/file.txt' iv_data = 'Hello2' ).
+    cl_abap_unit_assert=>assert_true( lo_zipw->is_dirty( ) ).
     lv_xdata = lo_zipw->get_blob( ).
+    cl_abap_unit_assert=>assert_false( lo_zipw->is_dirty( ) ).
     lo_zip->load( zip = lv_xdata ).
     cl_abap_unit_assert=>assert_equals( act = lines( lo_zip->files ) exp = 1 ).
     lo_zip->get( exporting  name = 'dir/file.txt' importing  content = lv_xdata ).

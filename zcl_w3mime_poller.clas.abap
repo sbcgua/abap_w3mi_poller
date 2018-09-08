@@ -15,6 +15,7 @@ public section.
   types:
     begin of ty_file_state,
       path      type string,
+      isdir     type abap_bool, " for future use
       timestamp type char14,
     end of ty_file_state .
   types:
