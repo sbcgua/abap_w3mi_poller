@@ -6,7 +6,6 @@ class ZCL_W3MIME_ZIP_WRITER definition
 public section.
 
   type-pools ABAP .
-
   methods CONSTRUCTOR
     importing
       !IO_ZIP type ref to CL_ABAP_ZIP optional
@@ -44,6 +43,11 @@ public section.
   methods IS_DIRTY
     returning
       value(R_YES) type ABAP_BOOL .
+  methods DELETE
+    importing
+      !IV_FILENAME type STRING
+    raising
+      ZCX_W3MIME_ERROR .
 protected section.
 private section.
 
@@ -101,6 +105,15 @@ method constructor.
 endmethod.  " constructor.
 
 
+method delete.
+  mo_zip->delete( exporting name = iv_filename exceptions others = 4 ).
+  if sy-subrc is not initial.
+    zcx_w3mime_error=>raise( 'delete failed' ).
+  endif.
+  mv_is_dirty = abap_true.
+endmethod.
+
+
 method get_blob.
   rv_blob = mo_zip->save( ).
   mv_is_dirty = abap_false.
@@ -110,6 +123,11 @@ endmethod.  " get_blob
 method HAS.
   read table mo_zip->files with key name = iv_filename transporting no fields.
   r_yes = boolc( sy-subrc is initial ).
+endmethod.
+
+
+method is_dirty.
+  r_yes = mv_is_dirty.
 endmethod.
 
 
@@ -151,9 +169,4 @@ method READX.
   endcase.
 
 endmethod.
-
-method is_dirty.
-  r_yes = mv_is_dirty.
-endmethod.
-
 ENDCLASS.
