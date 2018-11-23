@@ -314,6 +314,7 @@ method resolve_filename.
 
   if ev_directory is initial.
     cl_gui_frontend_services=>get_sapgui_workdir( changing sapworkdir = ev_directory exceptions others = 4 ).
+    cl_gui_cfw=>flush( ).
     if sy-subrc is initial. " hmmm ? eclipse ?
       ev_directory = ev_directory && c_sep.
     else.
