@@ -161,6 +161,7 @@ class lcl_poller implementation.
     field-symbols <t> like line of mt_targets.
 
     loop at changed_list assigning <i>.
+      <i>-path = to_upper( <i>-path ).
       read table mt_targets assigning <t> with key path = <i>-path.
       assert sy-subrc is initial.
 
@@ -358,17 +359,17 @@ start-of-selection.
   append initial line to gt_targets assigning <g_target>.
   <g_target>-w3key-relid = 'MI'. " Fix to mime for the moment
   <g_target>-w3key-objid = p_obj1.
-  <g_target>-path        = p_file1.
+  <g_target>-path        = to_upper( p_file1 ).
 
   append initial line to gt_targets assigning <g_target>.
   <g_target>-w3key-relid = 'MI'. " Fix to mime for the moment
   <g_target>-w3key-objid = p_obj2.
-  <g_target>-path        = p_file2.
+  <g_target>-path        = to_upper( p_file2 ).
 
   append initial line to gt_targets assigning <g_target>.
   <g_target>-w3key-relid = 'MI'. " Fix to mime for the moment
   <g_target>-w3key-objid = p_obj3.
-  <g_target>-path        = p_file3.
+  <g_target>-path        = to_upper( p_file3 ).
 
   try.
     delete gt_targets where w3key-objid is initial and path is initial.
