@@ -54,6 +54,24 @@ public section.
   class-methods CHOOSE_MIME_DIALOG
     returning
       value(RV_OBJ_NAME) type SHVALUE_D .
+  class-methods UPDATE_OBJECT_META
+    importing
+      !IV_FILENAME type W3_QVALUE optional
+      !IV_EXTENSION type W3_QVALUE optional
+      !IV_MIME_TYPE type W3_QVALUE optional
+      !IV_VERSION type W3_QVALUE optional
+      !IV_KEY type WWWDATA-OBJID
+      !IV_TYPE type WWWDATA-RELID default 'MI'
+    raising
+      ZCX_W3MIME_ERROR .
+  class-methods UPDATE_OBJECT_SINGLE_META
+    importing
+      !IV_PARAM type W3_NAME
+      !IV_VALUE type W3_QVALUE
+      !IV_KEY type WWWDATA-OBJID
+      !IV_TYPE type WWWDATA-RELID default 'MI'
+    raising
+      ZCX_W3MIME_ERROR .
 protected section.
 private section.
 ENDCLASS.
@@ -201,24 +219,16 @@ endmethod.  " read_object_x.
 
 method update_object.
 
-  data: ls_param  type wwwparams,
+  data: lv_size   type wwwparams-value,
         ls_object type wwwdatatab.
 
-  ls_param-relid = iv_type.
-  ls_param-objid = iv_key.
-  ls_param-name  = 'filesize'.
-  ls_param-value = iv_size.
-  condense ls_param-value.
-
-  call function 'WWWPARAMS_MODIFY_SINGLE'
-    exporting
-      params = ls_param
-    exceptions
-      others = 1.
-
-  if sy-subrc > 0.
-    zcx_w3mime_error=>raise( 'Cannot upload W3xx data' ). "#EC NOTEXT
-  endif.
+  lv_size = iv_size.
+  condense lv_size.
+  update_object_single_meta(
+    iv_type  = iv_type
+    iv_key   = iv_key
+    iv_param = 'filesize'
+    iv_value = lv_size ).
 
   ls_object = get_object_info( iv_key = iv_key iv_type = iv_type ).
   ls_object-chname = sy-uname.
@@ -239,6 +249,74 @@ method update_object.
   endif.
 
 endmethod.  " update_object.
+
+
+method UPDATE_OBJECT_META.
+
+  data: ls_param  type wwwparams,
+        ls_object type wwwdatatab.
+
+  ls_param-relid = iv_type.
+  ls_param-objid = iv_key.
+
+  if iv_filename is supplied.
+    update_object_single_meta(
+      iv_type  = iv_type
+      iv_key   = iv_key
+      iv_param = 'filename'
+      iv_value = iv_filename ).
+  endif.
+
+  if iv_extension is supplied.
+    update_object_single_meta(
+      iv_type  = iv_type
+      iv_key   = iv_key
+      iv_param = 'fileextension'
+      iv_value = iv_extension ).
+  endif.
+
+  if iv_mime_type is supplied.
+    update_object_single_meta(
+      iv_type  = iv_type
+      iv_key   = iv_key
+      iv_param = 'mimetype'
+      iv_value = iv_mime_type ).
+  endif.
+
+  if iv_version is supplied.
+    update_object_single_meta(
+      iv_type  = iv_type
+      iv_key   = iv_key
+      iv_param = 'version'
+      iv_value = iv_version ).
+  endif.
+
+endmethod.
+
+
+method update_object_single_meta.
+
+  data: ls_param  type wwwparams,
+        ls_object type wwwdatatab.
+
+  assert iv_type = 'MI' or iv_type = 'HT'.
+
+  ls_param-relid = iv_type.
+  ls_param-objid = iv_key.
+  ls_param-name  = iv_param.
+  ls_param-value = iv_value.
+
+  call function 'WWWPARAMS_MODIFY_SINGLE'
+    exporting
+      params = ls_param
+    exceptions
+      others = 1.
+
+  if sy-subrc > 0.
+    zcx_w3mime_error=>raise( 'Cannot update W3xx metadata' ). "#EC NOTEXT
+  endif.
+
+endmethod.
 
 
 method update_object_x.
