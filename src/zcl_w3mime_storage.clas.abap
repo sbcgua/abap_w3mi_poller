@@ -54,6 +54,15 @@ public section.
   class-methods CHOOSE_MIME_DIALOG
     returning
       value(RV_OBJ_NAME) type SHVALUE_D .
+  class-methods READ_OBJECT_SINGLE_META
+    importing
+      !IV_PARAM type W3_NAME
+      !IV_KEY type WWWDATA-OBJID
+      !IV_TYPE type WWWDATA-RELID default 'MI'
+    returning
+      value(RV_VALUE) type W3_QVALUE
+    raising
+      ZCX_W3MIME_ERROR .
   class-methods UPDATE_OBJECT_META
     importing
       !IV_FILENAME type W3_QVALUE optional
@@ -193,6 +202,27 @@ method read_object.
 endmethod.  " read_object.
 
 
+method READ_OBJECT_SINGLE_META.
+
+  assert iv_type = 'MI' or iv_type = 'HT'.
+
+  call function 'WWWPARAMS_READ'
+    exporting
+      relid = iv_type
+      objid = iv_key
+      name  = iv_param
+    importing
+      value = rv_value
+    exceptions
+      others = 1.
+
+  if sy-subrc > 0.
+    zcx_w3mime_error=>raise( |Cannot read W3xx metadata: { iv_param }| ). "#EC NOTEXT
+  endif.
+
+endmethod.
+
+
 method read_object_x.
   data:
         lt_data type lvc_t_mime,
@@ -219,17 +249,43 @@ endmethod.  " read_object_x.
 
 method update_object.
 
-  data: lv_size   type wwwparams-value,
+  data: lv_temp   type wwwparams-value,
         ls_object type wwwdatatab.
 
-  lv_size = iv_size.
-  condense lv_size.
+  " update file size
+  lv_temp = iv_size.
+  condense lv_temp.
   update_object_single_meta(
     iv_type  = iv_type
     iv_key   = iv_key
     iv_param = 'filesize'
-    iv_value = lv_size ).
+    iv_value = lv_temp ).
 
+  " update version
+  try .
+    lv_temp = read_object_single_meta(
+      iv_type  = iv_type
+      iv_key   = iv_key
+      iv_param = 'version' ).
+
+    if lv_temp is not initial and strlen( lv_temp ) = 5 and lv_temp+0(5) co '1234567890'.
+      data lv_version type numc_5.
+      lv_version = lv_temp.
+      lv_version = lv_version + 1.
+      lv_temp    = lv_version.
+      update_object_single_meta(
+        iv_type  = iv_type
+        iv_key   = iv_key
+        iv_param = 'version'
+        iv_value = lv_temp ).
+    endif.
+
+  catch zcx_w3mime_error.
+    " ignore errors
+    clear lv_temp.
+  endtry.
+
+  " update data
   ls_object = get_object_info( iv_key = iv_key iv_type = iv_type ).
   ls_object-chname = sy-uname.
   ls_object-tdate  = sy-datum.
@@ -313,7 +369,7 @@ method update_object_single_meta.
       others = 1.
 
   if sy-subrc > 0.
-    zcx_w3mime_error=>raise( 'Cannot update W3xx metadata' ). "#EC NOTEXT
+    zcx_w3mime_error=>raise( |Cannot update W3xx metadata { iv_param }| ). "#EC NOTEXT
   endif.
 
 endmethod.
