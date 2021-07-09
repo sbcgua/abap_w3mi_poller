@@ -1,6 +1,6 @@
 # ABAP W3MI poller
 A tool to poll file change and upload changed files automatically as W3MI object.
-Created mainly to simplify CSS editing in https://github.com/larshp/abapGit, but can be used for other purposes.
+Created mainly to simplify CSS editing in https://github.com/abapGit/abapGit, but can be used for other purposes.
 
 In particular, can be used as a **library** of file system and mime object tools. Which I actually do in my other project e.g. [mockup loader](https://github.com/sbcgua/mockup_loader) and [mockup compiler](https://github.com/sbcgua/mockup_compiler). See more details below.
 
@@ -8,7 +8,7 @@ In particular, can be used as a **library** of file system and mime object tools
 
 ## Installation
 
-Clone the repository to your SAP system using [abapGit](https://github.com/larshp/abapGit) tool.
+Clone the repository to your SAP system using [abapGit](https://github.com/abapGit/abapGit) tool.
 
 ## Usage
 Enter filename to poll and target object at selection screen. You can also choose multiple polling pairs. The first pair is remembered in user parameters for the session live time.
