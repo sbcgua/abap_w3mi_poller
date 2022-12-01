@@ -295,7 +295,9 @@ endmethod.  " read_file_x.
 
 
 method resolve_filename.
-  data: lv_extension type string.
+  data:
+        lv_sep       type c,
+        lv_extension type string.
 
   parse_path(
     exporting
