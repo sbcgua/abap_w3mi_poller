@@ -263,23 +263,35 @@ selection-screen begin of block b1 with frame title txt_b1.
     parameters p_file3 type char255.
   selection-screen end of line.
 
+  selection-screen begin of line.
+    selection-screen comment (24) t_obj4 for field p_obj4.
+    parameters p_obj4  type w3objid.
+    parameters p_file4 type char255.
+  selection-screen end of line.
+
+  selection-screen begin of line.
+    selection-screen comment (24) t_obj5 for field p_obj5.
+    parameters p_obj5  type w3objid.
+    parameters p_file5 type char255.
+  selection-screen end of line.
+
 selection-screen end of block b1.
 
 selection-screen begin of block b2 with frame title txt_b2.
 
   selection-screen begin of line.
     selection-screen comment (24) txt_noac for field p_noact.
-    parameters p_noact type char1 radiobutton group r1 default 'X'.
+    parameters p_noact type xfeld radiobutton group r1 default 'X'.
   selection-screen end of line.
 
   selection-screen begin of line.
     selection-screen comment (24) txt_down for field p_down.
-    parameters p_down type char1 radiobutton group r1.
+    parameters p_down type xfeld radiobutton group r1.
   selection-screen end of line.
 
   selection-screen begin of line.
     selection-screen comment (24) txt_upl for field p_upl.
-    parameters p_upl type char1 radiobutton group r1.
+    parameters p_upl type xfeld radiobutton group r1.
   selection-screen end of line.
 
 selection-screen end of block b2.
@@ -291,6 +303,8 @@ initialization.
   t_obj1   = 'W3MI object / File path'. "#EC NOTEXT
   t_obj2   = 'W3MI object / File path'. "#EC NOTEXT
   t_obj3   = 'W3MI object / File path'. "#EC NOTEXT
+  t_obj4   = 'W3MI object / File path'. "#EC NOTEXT
+  t_obj5   = 'W3MI object / File path'. "#EC NOTEXT
 
   txt_b2   = 'Start parameters'.        "#EC NOTEXT
   txt_noac = 'Just start polling'.      "#EC NOTEXT
@@ -319,6 +333,18 @@ at selection-screen on value-request for p_file3.
 
 at selection-screen on value-request for p_obj3.
   perform f4_mime_path changing p_obj3.
+
+at selection-screen on value-request for p_file4.
+  perform f4_file_path changing p_file4.
+
+at selection-screen on value-request for p_obj4.
+  perform f4_mime_path changing p_obj4.
+
+at selection-screen on value-request for p_file5.
+  perform f4_file_path changing p_file5.
+
+at selection-screen on value-request for p_obj5.
+  perform f4_mime_path changing p_obj5.
 
 at selection-screen on p_file1.
   if p_file1 is not initial.
@@ -371,6 +397,16 @@ form main.
   <target>-w3key-objid = p_obj3.
   <target>-path        = to_upper( p_file3 ).
 
+  append initial line to lt_targets assigning <target>.
+  <target>-w3key-relid = 'MI'. " Fix to mime for the moment
+  <target>-w3key-objid = p_obj4.
+  <target>-path        = to_upper( p_file4 ).
+
+  append initial line to lt_targets assigning <target>.
+  <target>-w3key-relid = 'MI'. " Fix to mime for the moment
+  <target>-w3key-objid = p_obj5.
+  <target>-path        = to_upper( p_file5 ).
+
   try.
     delete lt_targets where w3key-objid is initial and path is initial.
     lcl_app=>run(
@@ -390,7 +426,7 @@ form f4_file_path changing c_path type char255.
   endif.
 endform.
 
-form f4_mime_path changing c_path.
+form f4_mime_path changing c_path type w3objid.
   c_path = zcl_w3mime_storage=>choose_mime_dialog( ).
   if c_path is not initial.
     set parameter id gc_obj_param_name field c_path.
