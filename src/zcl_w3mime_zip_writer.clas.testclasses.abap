@@ -1,4 +1,4 @@
-class lcl_zip_writer_test definition final for testing
+class ltcl_zip_writer_test definition final for testing
   duration short
   risk level harmless.
 
@@ -10,7 +10,7 @@ class lcl_zip_writer_test definition final for testing
 
 endclass.
 
-class lcl_zip_writer_test implementation.
+class ltcl_zip_writer_test implementation.
 
   method zip.
 
@@ -135,7 +135,7 @@ class lcl_zip_writer_test implementation.
   method encodings.
 
     data lo_zipw type ref to zcl_w3mime_zip_writer.
-    data lo_conv type ref to cl_abap_conv_out_ce.
+    " data lo_conv type ref to cl_abap_conv_out_ce.
     data lv_xdata type xstring.
 
     create object lo_zipw

@@ -1,4 +1,4 @@
-class lcl_fs_test definition final for testing
+class ltcl_fs_test definition final for testing
   duration short
   risk level harmless.
 
@@ -11,7 +11,7 @@ class lcl_fs_test definition final for testing
     methods path_ensure_dir_tail for testing.
 endclass.
 
-class lcl_fs_test implementation.
+class ltcl_fs_test implementation.
 
   method parse_path.
 

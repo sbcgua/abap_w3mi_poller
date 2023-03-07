@@ -58,7 +58,7 @@
     "omit_parameter_name": false,
     "omit_preceding_zeros": true,
     "omit_receiving": true,
-    "parser_702_chaining": true,
+    "parser_702_chaining": false,
     "parser_missing_space": true,
     "pragma_style": true,
     "prefer_corresponding": true,
@@ -110,10 +110,7 @@
     },
     "cloud_types": true,
     "colon_missing_space": true,
-    "commented_code": {
-      "exclude": [],
-      "allowIncludeInFugr": true
-    },
+    "commented_code": false,
     "constructor_visibility_public": true,
     "contains_tab": true,
     "definitions_top": false,
@@ -167,7 +164,7 @@
     "implement_methods": true,
     "in_statement_indentation": false,
     "indentation": {
-      "exclude": ["perf_test\\.prog\\.abap"],
+      "exclude": [],
       "ignoreExceptions": true,
       "alignTryCatch": true,
       "globalClassSkipFirst": false,
@@ -250,7 +247,7 @@
       "logic": "less"
     },
     "no_public_attributes": {
-      "exclude": ["testclasses.abap$", "perf_test\\.prog\\.abap"],
+      "exclude": ["testclasses.abap$"],
       "ignoreTestClasses": false,
       "allowReadOnly": true
     },

@@ -10,7 +10,7 @@ class zcl_w3mime_fs definition
     types:
       ty_char255 type c length 255.
 
-    class-data c_sep type c length 1 read-only .
+    class-data gc_sep type c length 1 read-only .
 
     class-methods choose_dir_dialog
       returning
@@ -49,17 +49,17 @@ class zcl_w3mime_fs definition
         zcx_w3mime_error .
     class-methods parse_path
       importing
-        value(iv_path)      type string
+        iv_path      type string
       exporting
-        value(ev_directory) type string
-        value(ev_filename)  type string
-        value(ev_extension) type string .
+        ev_directory type string
+        ev_filename  type string
+        ev_extension type string .
     class-methods resolve_filename
       importing
-        value(iv_path)      type string
+        iv_path      type string
       exporting
-        value(ev_filename)  type string
-        value(ev_directory) type string
+        ev_filename  type string
+        ev_directory type string
       raising
         zcx_w3mime_error .
     class-methods read_dir
@@ -153,9 +153,9 @@ CLASS ZCL_W3MIME_FS IMPLEMENTATION.
 
   method class_constructor.
 
-    cl_gui_frontend_services=>get_file_separator( changing file_separator = c_sep exceptions others = 4 ).
+    cl_gui_frontend_services=>get_file_separator( changing file_separator = gc_sep exceptions others = 4 ).
     if sy-subrc is not initial.
-      c_sep = '\'. " Assume windows (eclipse ???)
+      gc_sep = '\'. " Assume windows (eclipse ???)
     endif.
 
   endmethod.
@@ -171,7 +171,7 @@ CLASS ZCL_W3MIME_FS IMPLEMENTATION.
       return.
     endif.
 
-    find first occurrence of c_sep in reverse( iv_path ) match offset lv_offs.
+    find first occurrence of gc_sep in reverse( iv_path ) match offset lv_offs.
 
     if sy-subrc = 0.
       lv_offs      = strlen( iv_path ) - lv_offs.
@@ -195,8 +195,8 @@ CLASS ZCL_W3MIME_FS IMPLEMENTATION.
   method path_ensure_dir_tail.
 
     r_path = i_path.
-    if r_path is not initial and substring( val = r_path off = strlen( r_path ) - 1 len = 1 ) <> c_sep.
-      r_path = r_path && c_sep.
+    if r_path is not initial and substring( val = r_path off = strlen( r_path ) - 1 len = 1 ) <> gc_sep.
+      r_path = r_path && gc_sep.
     endif.
 
   endmethod.
@@ -220,8 +220,8 @@ CLASS ZCL_W3MIME_FS IMPLEMENTATION.
     endif.
 
     if iv_p2 is not initial.
-      if rt_joined is not initial and substring( val = rt_joined off = strlen( rt_joined ) - 1 len = 1 ) <> c_sep.
-        rt_joined = rt_joined && c_sep.
+      if rt_joined is not initial and substring( val = rt_joined off = strlen( rt_joined ) - 1 len = 1 ) <> gc_sep.
+        rt_joined = rt_joined && gc_sep.
       endif.
 
       rt_joined = rt_joined && iv_p2.
@@ -235,7 +235,7 @@ CLASS ZCL_W3MIME_FS IMPLEMENTATION.
     " Does not support .. at the moment
     if path_is_relative( iv_to = iv_to iv_from = iv_from ) = abap_true.
       rv_path = substring( val = iv_to off = strlen( iv_from ) ).
-      if strlen( rv_path ) > 0 and rv_path+0(1) = c_sep.
+      if strlen( rv_path ) > 0 and rv_path+0(1) = gc_sep.
         shift rv_path left by 1 places.
       endif.
     else.
@@ -313,7 +313,6 @@ CLASS ZCL_W3MIME_FS IMPLEMENTATION.
 
   method resolve_filename.
 
-    data lv_sep       type c.
     data lv_extension type string.
 
     parse_path(
@@ -333,7 +332,7 @@ CLASS ZCL_W3MIME_FS IMPLEMENTATION.
       cl_gui_frontend_services=>get_sapgui_workdir( changing sapworkdir = ev_directory exceptions others = 4 ).
       cl_gui_cfw=>flush( ).
       if sy-subrc is initial. " hmmm ? eclipse ?
-        ev_directory = ev_directory && c_sep.
+        ev_directory = ev_directory && gc_sep.
       else.
         ev_directory = 'c:\tmp\'. " TODO refactor, hack for eclipse unit test
       endif.

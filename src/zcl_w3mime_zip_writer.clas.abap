@@ -5,7 +5,6 @@ class zcl_w3mime_zip_writer definition
 
   public section.
 
-    type-pools abap .
     methods constructor
       importing
         !io_zip      type ref to cl_abap_zip optional

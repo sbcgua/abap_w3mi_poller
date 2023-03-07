@@ -1,4 +1,4 @@
-class lcl_poller_test definition final for testing
+class ltcl_poller_test definition final for testing
   duration short
   risk level harmless.
 
@@ -8,27 +8,27 @@ class lcl_poller_test definition final for testing
     methods merge_changes for testing.
 endclass.
 
-class lcl_poller_test implementation.
+class ltcl_poller_test implementation.
 
   method manual_state_check.
 
-    data lo type ref to zcl_w3mime_poller.
+    " data lo type ref to zcl_w3mime_poller.
+    " data lt_act type zcl_w3mime_poller=>tt_file_state.
     data lt_targets type zcl_w3mime_poller=>tt_target.
-    data lt_act type zcl_w3mime_poller=>tt_file_state.
     field-symbols <t> like line of lt_targets.
 
     append initial line to lt_targets assigning <t>.
     <t>-directory = 'c:\tmp'.
 
-    try.
-      "FOR MANUAL TEST ONLY
-*      create object lo exporting it_targets = lt_targets.
-*      lt_act = lo->read_current_state( ).
-*      lt_act = lo->update_state( ).
-*      lt_act = lo->update_state( ).
-    catch cx_root.
-      cl_abap_unit_assert=>fail( 'Unexpected error' ).
-    endtry.
+    " try.
+    "   "FOR MANUAL TEST ONLY
+    "   create object lo exporting it_targets = lt_targets.
+    "   lt_act = lo->read_current_state( ).
+    "   lt_act = lo->update_state( ).
+    "   lt_act = lo->update_state( ).
+    " catch cx_root.
+    "   cl_abap_unit_assert=>fail( 'Unexpected error' ).
+    " endtry.
 
   endmethod.
 

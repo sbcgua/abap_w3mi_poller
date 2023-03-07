@@ -1,4 +1,4 @@
-class lcl_w3s_test definition final for testing
+class ltcl_w3s_test definition final for testing
   duration short
   risk level harmless.
 
@@ -6,7 +6,7 @@ class lcl_w3s_test definition final for testing
     methods read_object_x for testing.
 endclass.
 
-class lcl_w3s_test implementation.
+class ltcl_w3s_test implementation.
 
   method read_object_x.
     data lv_xdata type xstring.

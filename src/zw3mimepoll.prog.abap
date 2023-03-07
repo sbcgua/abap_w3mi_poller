@@ -245,42 +245,42 @@ constants gc_obj_param_name  type char20 value 'ZW3MIMEPOLL_OBJ'.
 
 selection-screen begin of block b1 with frame title txt_b1.
 
-selection-screen begin of line.
-selection-screen comment (24) t_obj1 for field p_obj1.
-parameters p_obj1  type w3objid.
-parameters p_file1 type char255.
-selection-screen end of line.
+  selection-screen begin of line.
+    selection-screen comment (24) t_obj1 for field p_obj1.
+    parameters p_obj1  type w3objid.
+    parameters p_file1 type char255.
+  selection-screen end of line.
 
-selection-screen begin of line.
-selection-screen comment (24) t_obj2 for field p_obj2.
-parameters p_obj2  type w3objid.
-parameters p_file2 type char255.
-selection-screen end of line.
+  selection-screen begin of line.
+    selection-screen comment (24) t_obj2 for field p_obj2.
+    parameters p_obj2  type w3objid.
+    parameters p_file2 type char255.
+  selection-screen end of line.
 
-selection-screen begin of line.
-selection-screen comment (24) t_obj3 for field p_obj3.
-parameters p_obj3  type w3objid.
-parameters p_file3 type char255.
-selection-screen end of line.
+  selection-screen begin of line.
+    selection-screen comment (24) t_obj3 for field p_obj3.
+    parameters p_obj3  type w3objid.
+    parameters p_file3 type char255.
+  selection-screen end of line.
 
 selection-screen end of block b1.
 
 selection-screen begin of block b2 with frame title txt_b2.
 
-selection-screen begin of line.
-selection-screen comment (24) txt_noac for field p_noact.
-parameters p_noact type char1 radiobutton group r1 default 'X'.
-selection-screen end of line.
+  selection-screen begin of line.
+    selection-screen comment (24) txt_noac for field p_noact.
+    parameters p_noact type char1 radiobutton group r1 default 'X'.
+  selection-screen end of line.
 
-selection-screen begin of line.
-selection-screen comment (24) txt_down for field p_down.
-parameters p_down type char1 radiobutton group r1.
-selection-screen end of line.
+  selection-screen begin of line.
+    selection-screen comment (24) txt_down for field p_down.
+    parameters p_down type char1 radiobutton group r1.
+  selection-screen end of line.
 
-selection-screen begin of line.
-selection-screen comment (24) txt_upl for field p_upl.
-parameters p_upl type char1 radiobutton group r1.
-selection-screen end of line.
+  selection-screen begin of line.
+    selection-screen comment (24) txt_upl for field p_upl.
+    parameters p_upl type char1 radiobutton group r1.
+  selection-screen end of line.
 
 selection-screen end of block b2.
 
@@ -335,6 +335,7 @@ at selection-screen.
     when 'FC01'.          "Set dummy
       p_obj1  = 'ZMIME_POLLER_TEST'.
       p_file1 = 'zmime_poller_test.txt'.
+    when others.
   endcase.
 
 **********************************************************************

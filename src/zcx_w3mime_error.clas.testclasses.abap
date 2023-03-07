@@ -1,4 +1,4 @@
-class lcl_error_test definition final for testing
+class ltcl_error_test definition final for testing
   duration short
   risk level harmless.
 
@@ -6,7 +6,7 @@ class lcl_error_test definition final for testing
     methods raise for testing.
 endclass.
 
-class lcl_error_test implementation.
+class ltcl_error_test implementation.
 
   method raise.
 

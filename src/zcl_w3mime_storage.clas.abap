@@ -92,13 +92,13 @@ CLASS ZCL_W3MIME_STORAGE IMPLEMENTATION.
 
   method check_obj_exists.
 
-    data dummy type wwwdata-relid.
+    data lv_dummy type wwwdata-relid.
 
-    select single relid into dummy
+    select single relid into lv_dummy
       from wwwdata
       where relid = iv_type
-      and   objid = iv_key
-      and   srtf2 = 0.
+      and objid = iv_key
+      and srtf2 = 0.
 
     rv_yes = boolc( sy-subrc = 0 ).
 
@@ -108,20 +108,20 @@ CLASS ZCL_W3MIME_STORAGE IMPLEMENTATION.
   method choose_mime_dialog.
 
     types:
-      begin of t_w3head,
+      begin of lty_w3head,
         objid type wwwdata-objid,
         text  type wwwdata-text,
-      end of t_w3head.
+      end of lty_w3head.
 
     data:
       ls_return type ddshretval,
-      lt_data   type standard table of t_w3head,
+      lt_data   type standard table of lty_w3head,
       lt_return type standard table of ddshretval.
 
     select distinct objid text from wwwdata
       into corresponding fields of table lt_data
       where relid = 'MI'
-      and   objid like 'Z%'
+      and objid like 'Z%'
       order by objid.
 
     call function 'F4IF_INT_TABLE_VALUE_REQUEST'
@@ -151,8 +151,8 @@ CLASS ZCL_W3MIME_STORAGE IMPLEMENTATION.
     select single * into corresponding fields of rs_object
       from wwwdata
       where relid = iv_type
-      and   objid = iv_key
-      and   srtf2 = 0.
+      and objid = iv_key
+      and srtf2 = 0.
 
     if sy-subrc > 0.
       zcx_w3mime_error=>raise( 'Cannot read W3xx info' ).   "#EC NOTEXT
@@ -310,7 +310,6 @@ CLASS ZCL_W3MIME_STORAGE IMPLEMENTATION.
   method update_object_meta.
 
     data ls_param  type wwwparams.
-    data ls_object type wwwdatatab.
 
     ls_param-relid = iv_type.
     ls_param-objid = iv_key.
@@ -353,7 +352,6 @@ CLASS ZCL_W3MIME_STORAGE IMPLEMENTATION.
   method update_object_single_meta.
 
     data ls_param  type wwwparams.
-    data ls_object type wwwdatatab.
 
     assert iv_type = 'MI' or iv_type = 'HT'.
 
