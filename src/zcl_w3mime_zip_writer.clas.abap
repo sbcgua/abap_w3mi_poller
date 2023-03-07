@@ -1,68 +1,68 @@
-class ZCL_W3MIME_ZIP_WRITER definition
+class zcl_w3mime_zip_writer definition
   public
   final
   create public .
 
-public section.
+  public section.
 
-  type-pools ABAP .
-  methods CONSTRUCTOR
-    importing
-      !IO_ZIP type ref to CL_ABAP_ZIP optional
-      !IV_ENCODING type ABAP_ENCODING optional .
-  methods ADD
-    importing
-      !IV_FILENAME type STRING
-      !IV_DATA type STRING .
-  methods ADDX
-    importing
-      !IV_FILENAME type STRING
-      !IV_XDATA type XSTRING .
-  methods GET_BLOB
-    returning
-      value(RV_BLOB) type XSTRING .
-  methods READ
-    importing
-      !IV_FILENAME type STRING
-    returning
-      value(RV_DATA) type STRING
-    raising
-      ZCX_W3MIME_ERROR .
-  methods READX
-    importing
-      !IV_FILENAME type STRING
-    returning
-      value(RV_XDATA) type XSTRING
-    raising
-      ZCX_W3MIME_ERROR .
-  methods HAS
-    importing
-      !IV_FILENAME type STRING
-    returning
-      value(R_YES) type ABAP_BOOL .
-  methods IS_DIRTY
-    returning
-      value(R_YES) type ABAP_BOOL .
-  methods DELETE
-    importing
-      !IV_FILENAME type STRING
-    raising
-      ZCX_W3MIME_ERROR .
-  methods LIST
-    returning
-      value(rt_list) type string_table.
+    type-pools abap .
+    methods constructor
+      importing
+        !io_zip      type ref to cl_abap_zip optional
+        !iv_encoding type abap_encoding optional .
+    methods add
+      importing
+        !iv_filename type string
+        !iv_data     type string .
+    methods addx
+      importing
+        !iv_filename type string
+        !iv_xdata    type xstring .
+    methods get_blob
+      returning
+        value(rv_blob) type xstring .
+    methods read
+      importing
+        !iv_filename   type string
+      returning
+        value(rv_data) type string
+      raising
+        zcx_w3mime_error .
+    methods readx
+      importing
+        !iv_filename    type string
+      returning
+        value(rv_xdata) type xstring
+      raising
+        zcx_w3mime_error .
+    methods has
+      importing
+        !iv_filename type string
+      returning
+        value(r_yes) type abap_bool .
+    methods is_dirty
+      returning
+        value(r_yes) type abap_bool .
+    methods delete
+      importing
+        !iv_filename type string
+      raising
+        zcx_w3mime_error .
+    methods list
+      returning
+        value(rt_list) type string_table.
 
-protected section.
-private section.
+  protected section.
+  private section.
 
-  data MV_IS_DIRTY type ABAP_BOOL .
-  data MO_ZIP type ref to CL_ABAP_ZIP .
-  data MO_CONV_OUT type ref to CL_ABAP_CONV_OUT_CE .
-  data MO_CONV_IN type ref to CL_ABAP_CONV_IN_CE .
-  data MO_CONV_IN_UTF8 type ref to CL_ABAP_CONV_IN_CE .
-  data MO_CONV_IN_UTF16 type ref to CL_ABAP_CONV_IN_CE .
-  type-pools ABAP .
-  data MV_ENCODING type ABAP_ENCODING .
+    data mv_is_dirty type abap_bool .
+    data mo_zip type ref to cl_abap_zip .
+    data mo_conv_out type ref to cl_abap_conv_out_ce .
+    data mo_conv_in type ref to cl_abap_conv_in_ce .
+    data mo_conv_in_utf8 type ref to cl_abap_conv_in_ce .
+    data mo_conv_in_utf16 type ref to cl_abap_conv_in_ce .
+    data mv_encoding type abap_encoding .
+
 ENDCLASS.
 
 
@@ -71,30 +71,38 @@ CLASS ZCL_W3MIME_ZIP_WRITER IMPLEMENTATION.
 
 
   method add.
+
     data lv_xdata type xstring.
 
     mo_conv_out->convert(
-      exporting data = iv_data
-      importing buffer = lv_xdata ).
+      exporting
+        data = iv_data
+      importing
+        buffer = lv_xdata ).
 
     addx(
       iv_filename = iv_filename
       iv_xdata    = lv_xdata ).
+
   endmethod.
 
 
   method addx.
+
     mo_zip->delete(
       exporting
         name = iv_filename
-      exceptions others = 1 ). " ignore exceptions
+      exceptions
+        others = 1 ). " ignore exceptions
 
     mo_zip->add( name = iv_filename content = iv_xdata ).
     mv_is_dirty = abap_true.
+
   endmethod.
 
 
   method constructor.
+
     if io_zip is bound.
       mo_zip = io_zip.
     else.
@@ -111,27 +119,39 @@ CLASS ZCL_W3MIME_ZIP_WRITER IMPLEMENTATION.
     mo_conv_in  = cl_abap_conv_in_ce=>create( encoding = mv_encoding ).
     mo_conv_in_utf8 = cl_abap_conv_in_ce=>create( encoding = '4110' ).
     mo_conv_in_utf16 = cl_abap_conv_in_ce=>create( encoding = '4103' ).
+
   endmethod.
 
 
   method delete.
-    mo_zip->delete( exporting name = iv_filename exceptions others = 4 ).
+
+    mo_zip->delete(
+      exporting
+        name = iv_filename
+      exceptions
+        others = 4 ).
+
     if sy-subrc is not initial.
       zcx_w3mime_error=>raise( 'delete failed' ).
     endif.
     mv_is_dirty = abap_true.
+
   endmethod.
 
 
   method get_blob.
+
     rv_blob = mo_zip->save( ).
     mv_is_dirty = abap_false.
+
   endmethod.
 
 
   method has.
+
     read table mo_zip->files with key name = iv_filename transporting no fields.
     r_yes = boolc( sy-subrc is initial ).
+
   endmethod.
 
 

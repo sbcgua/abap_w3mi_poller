@@ -23,6 +23,6 @@ class lcl_w3s_test implementation.
     lo_conv->convert( exporting input = lv_xdata importing data = lv_data ).
     cl_abap_unit_assert=>assert_equals( act = lv_data exp = 'MIME poller test file' ).
 
-  endmethod.  " read_object_x.
+  endmethod.
 
 endclass.

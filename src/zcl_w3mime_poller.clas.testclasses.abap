@@ -30,7 +30,7 @@ class lcl_poller_test implementation.
       cl_abap_unit_assert=>fail( 'Unexpected error' ).
     endtry.
 
-  endmethod.  " manual_state_check.
+  endmethod.
 
   define _add_state.
     append initial line to &1 assigning <i>.
@@ -40,10 +40,10 @@ class lcl_poller_test implementation.
 
   method detect_changes.
     data:
-          lt_prev type zcl_w3mime_poller=>tt_file_state,
-          lt_cur  like lt_prev,
-          lt_act  like lt_prev,
-          lt_exp  like lt_prev.
+      lt_prev type zcl_w3mime_poller=>tt_file_state,
+      lt_cur  like lt_prev,
+      lt_act  like lt_prev,
+      lt_exp  like lt_prev.
 
     field-symbols <i> like line of lt_prev.
 
@@ -60,13 +60,13 @@ class lcl_poller_test implementation.
     lt_act = zcl_w3mime_poller=>detect_changes( it_prev = lt_prev it_cur = lt_cur ).
     cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
 
-  endmethod.  " detect_changes.
+  endmethod.
 
   method merge_changes.
     data:
-          lt_prev type zcl_w3mime_poller=>tt_file_state,
-          lt_cur  like lt_prev,
-          lt_exp  like lt_prev.
+      lt_prev type zcl_w3mime_poller=>tt_file_state,
+      lt_cur  like lt_prev,
+      lt_exp  like lt_prev.
 
     field-symbols <i> like line of lt_prev.
 
@@ -84,6 +84,6 @@ class lcl_poller_test implementation.
     zcl_w3mime_poller=>merge_changes( exporting it_changes = lt_cur changing ct_state = lt_prev ).
     cl_abap_unit_assert=>assert_equals( act = lt_prev exp = lt_exp ).
 
-  endmethod.  " merge_changes.
+  endmethod.
 
 endclass.

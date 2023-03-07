@@ -14,10 +14,10 @@ endclass.
 class lcl_fs_test implementation.
 
   method parse_path.
-    data:
-          lv_filename type string,
-          lv_directory type string,
-          lv_extension type string.
+
+    data lv_filename type string.
+    data lv_directory type string.
+    data lv_extension type string.
 
     zcl_w3mime_fs=>parse_path(
       exporting
@@ -67,12 +67,12 @@ class lcl_fs_test implementation.
     cl_abap_unit_assert=>assert_equals( act = lv_filename  exp = 'test' ).
     cl_abap_unit_assert=>assert_equals( act = lv_extension exp = '.txt' ).
 
-  endmethod.  " parse_path.
+  endmethod.
 
   method resolve_filename.
-    data:
-          lv_filename type string,
-          lv_directory type string.
+
+    data lv_filename type string.
+    data lv_directory type string.
 
     try.
       zcl_w3mime_fs=>resolve_filename(
@@ -97,17 +97,21 @@ class lcl_fs_test implementation.
       cl_abap_unit_assert=>fail( 'Unexpected error' ).
     endtry.
 
-  endmethod. " resolve_filename.
+  endmethod.
 
   method path_join.
 
     data lv_act type string.
 
-    lv_act = zcl_w3mime_fs=>path_join( iv_p1 = 'c:\tmp' iv_p2 = 'test' ).
+    lv_act = zcl_w3mime_fs=>path_join(
+      iv_p1 = 'c:\tmp'
+      iv_p2 = 'test' ).
 
-    cl_abap_unit_assert=>assert_equals( act = lv_act  exp = 'c:\tmp\test' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lv_act
+      exp = 'c:\tmp\test' ).
 
-  endmethod.  " join_path.
+  endmethod.
 
   method path_is_relative.
     cl_abap_unit_assert=>assert_true(
@@ -154,6 +158,7 @@ class lcl_fs_test implementation.
   endmethod.
 
   method path_ensure_dir_tail.
+
     cl_abap_unit_assert=>assert_equals(
       act = zcl_w3mime_fs=>path_ensure_dir_tail( 'c:\tmp' )
       exp = 'c:\tmp\' ).
