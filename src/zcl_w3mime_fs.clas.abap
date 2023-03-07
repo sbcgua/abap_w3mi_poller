@@ -1,100 +1,100 @@
-class zcl_w3mime_fs definition
+class ZCL_W3MIME_FS definition
   public
   final
   create public .
 
-  public section.
+public section.
 
-    types:
-      tt_files type standard table of file_info with key filename .
-    types:
-      ty_char255 type c length 255.
+  types:
+    tt_files type standard table of file_info with key filename .
+  types:
+    ty_char255 type c length 255 .
 
-    class-data gc_sep type c length 1 read-only .
+  class-data:
+    gc_sep type c length 1 read-only .
 
-    class-methods choose_dir_dialog
-      returning
-        value(rv_path) type ty_char255 .
-    class-methods choose_file_dialog
-      returning
-        value(rv_path) type ty_char255 .
-    class-methods read_file
-      importing
-        !iv_filename type string
-      exporting
-        !et_data     type lvc_t_mime
-        !ev_size     type i
-      raising
-        zcx_w3mime_error .
-    class-methods write_file
-      importing
-        !iv_filename type string
-        !iv_size     type i
-      changing
-        !ct_data     type lvc_t_mime
-      raising
-        zcx_w3mime_error .
-    class-methods read_file_x
-      importing
-        !iv_filename   type string
-      returning
-        value(rv_data) type xstring
-      raising
-        zcx_w3mime_error .
-    class-methods write_file_x
-      importing
-        !iv_filename type string
-        !iv_data     type xstring
-      raising
-        zcx_w3mime_error .
-    class-methods parse_path
-      importing
-        iv_path      type string
-      exporting
-        ev_directory type string
-        ev_filename  type string
-        ev_extension type string .
-    class-methods resolve_filename
-      importing
-        iv_path      type string
-      exporting
-        ev_filename  type string
-        ev_directory type string
-      raising
-        zcx_w3mime_error .
-    class-methods read_dir
-      importing
-        !iv_dir         type string
-        !iv_filter      type string default '*.*'
-      returning
-        value(rt_files) type tt_files
-      raising
-        zcx_w3mime_error .
-    class-methods path_join
-      importing
-        !iv_p1           type string
-        !iv_p2           type string
-      returning
-        value(rt_joined) type string .
-    class-methods path_is_relative
-      importing
-        !iv_to        type string
-        !iv_from      type string
-      returning
-        value(rv_yes) type abap_bool .
-    class-methods path_relative
-      importing
-        !iv_from       type string
-        !iv_to         type string
-      returning
-        value(rv_path) type string .
-    class-methods class_constructor .
-    class-methods path_ensure_dir_tail
-      importing
-        !i_path       type string
-      returning
-        value(r_path) type string .
-
+  class-methods CHOOSE_DIR_DIALOG
+    returning
+      value(RV_PATH) type TY_CHAR255 .
+  class-methods CHOOSE_FILE_DIALOG
+    returning
+      value(RV_PATH) type TY_CHAR255 .
+  class-methods READ_FILE
+    importing
+      !IV_FILENAME type STRING
+    exporting
+      !ET_DATA type LVC_T_MIME
+      !EV_SIZE type I
+    raising
+      ZCX_W3MIME_ERROR .
+  class-methods WRITE_FILE
+    importing
+      !IV_FILENAME type STRING
+      !IV_SIZE type I
+    changing
+      !CT_DATA type LVC_T_MIME
+    raising
+      ZCX_W3MIME_ERROR .
+  class-methods READ_FILE_X
+    importing
+      !IV_FILENAME type STRING
+    returning
+      value(RV_DATA) type XSTRING
+    raising
+      ZCX_W3MIME_ERROR .
+  class-methods WRITE_FILE_X
+    importing
+      !IV_FILENAME type STRING
+      !IV_DATA type XSTRING
+    raising
+      ZCX_W3MIME_ERROR .
+  class-methods PARSE_PATH
+    importing
+      !IV_PATH type STRING
+    exporting
+      !EV_DIRECTORY type STRING
+      !EV_FILENAME type STRING
+      !EV_EXTENSION type STRING .
+  class-methods RESOLVE_FILENAME
+    importing
+      !IV_PATH type STRING
+    exporting
+      !EV_FILENAME type STRING
+      !EV_DIRECTORY type STRING
+    raising
+      ZCX_W3MIME_ERROR .
+  class-methods READ_DIR
+    importing
+      !IV_DIR type STRING
+      !IV_FILTER type STRING default '*.*'
+    returning
+      value(RT_FILES) type TT_FILES
+    raising
+      ZCX_W3MIME_ERROR .
+  class-methods PATH_JOIN
+    importing
+      !IV_P1 type STRING
+      !IV_P2 type STRING
+    returning
+      value(RT_JOINED) type STRING .
+  class-methods PATH_IS_RELATIVE
+    importing
+      !IV_TO type STRING
+      !IV_FROM type STRING
+    returning
+      value(RV_YES) type ABAP_BOOL .
+  class-methods PATH_RELATIVE
+    importing
+      !IV_FROM type STRING
+      !IV_TO type STRING
+    returning
+      value(RV_PATH) type STRING .
+  class-methods CLASS_CONSTRUCTOR .
+  class-methods PATH_ENSURE_DIR_TAIL
+    importing
+      !I_PATH type STRING
+    returning
+      value(R_PATH) type STRING .
   protected section.
   private section.
 ENDCLASS.

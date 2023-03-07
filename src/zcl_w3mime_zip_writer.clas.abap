@@ -52,16 +52,15 @@ class zcl_w3mime_zip_writer definition
         value(rt_list) type string_table.
 
   protected section.
-  private section.
+private section.
 
-    data mv_is_dirty type abap_bool .
-    data mo_zip type ref to cl_abap_zip .
-    data mo_conv_out type ref to cl_abap_conv_out_ce .
-    data mo_conv_in type ref to cl_abap_conv_in_ce .
-    data mo_conv_in_utf8 type ref to cl_abap_conv_in_ce .
-    data mo_conv_in_utf16 type ref to cl_abap_conv_in_ce .
-    data mv_encoding type abap_encoding .
-
+  data MV_IS_DIRTY type ABAP_BOOL .
+  data MO_ZIP type ref to CL_ABAP_ZIP .
+  data MO_CONV_OUT type ref to CL_ABAP_CONV_OUT_CE .
+  data MO_CONV_IN type ref to CL_ABAP_CONV_IN_CE .
+  data MO_CONV_IN_UTF8 type ref to CL_ABAP_CONV_IN_CE .
+  data MO_CONV_IN_UTF16 type ref to CL_ABAP_CONV_IN_CE .
+  data MV_ENCODING type ABAP_ENCODING .
 ENDCLASS.
 
 
