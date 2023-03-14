@@ -15,6 +15,36 @@
      <ENTRY>W3 MIME resource auto poller and uploader</ENTRY>
      <LENGTH>41</LENGTH>
     </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_DOWN</KEY>
+     <ENTRY>Download before polling</ENTRY>
+     <LENGTH>31</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_E2DIR</KEY>
+     <ENTRY>Sort by extension into dirs</ENTRY>
+     <LENGTH>35</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_M_FBF</KEY>
+     <ENTRY>Monitor file by file</ENTRY>
+     <LENGTH>28</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_M_PKG</KEY>
+     <ENTRY>Monitor whole package</ENTRY>
+     <LENGTH>29</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_PKG</KEY>
+     <ENTRY>Package</ENTRY>
+     <LENGTH>15</LENGTH>
+    </item>
    </TPOOL>
   </asx:values>
  </asx:abap>
