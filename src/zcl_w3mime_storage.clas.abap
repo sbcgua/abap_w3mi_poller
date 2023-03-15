@@ -178,6 +178,40 @@ CLASS ZCL_W3MIME_STORAGE IMPLEMENTATION.
   endmethod.
 
 
+  method get_object_meta.
+
+    data lt_params type table of wwwparams.
+    field-symbols <i> like line of lt_params.
+
+    call function 'WWWPARAMS_READ_ALL'
+      exporting
+        type   = iv_type
+        objid  = iv_key
+      tables
+        params = lt_params
+      exceptions
+        others = 1.
+
+    loop at lt_params assigning <i>.
+
+      case <i>-name.
+        when 'filesize'.
+          rs_meta-size = <i>-value.
+        when 'filename'.
+          rs_meta-filename = <i>-value.
+        when 'fileextension'.
+          rs_meta-ext = <i>-value.
+        when 'mimetype'.
+          rs_meta-mimetype = <i>-value.
+        when 'version'.
+          rs_meta-version = <i>-value.
+      endcase.
+
+    endloop.
+
+  endmethod.
+
+
   method read_object.
 
     data lv_value  type w3_qvalue.
@@ -410,38 +444,4 @@ CLASS ZCL_W3MIME_STORAGE IMPLEMENTATION.
       it_data = lt_data ).
 
   endmethod.
-
-  method get_object_meta.
-
-    data lt_params type table of wwwparams.
-    field-symbols <i> like line of lt_params.
-
-    call function 'WWWPARAMS_READ_ALL'
-      exporting
-        type   = iv_type
-        objid  = iv_key
-      tables
-        params = lt_params
-      exceptions
-        others = 1.
-
-    loop at lt_params assigning <i>.
-
-      case <i>-name.
-        when 'filesize'.
-          rs_meta-size = <i>-value.
-        when 'filename'.
-          rs_meta-filename = <i>-value.
-        when 'fileextension'.
-          rs_meta-ext = <i>-value.
-        when 'mimetype'.
-          rs_meta-mimetype = <i>-value.
-        when 'version'.
-          rs_meta-version = <i>-value.
-      endcase.
-
-    endloop.
-
-  endmethod.
-
 ENDCLASS.

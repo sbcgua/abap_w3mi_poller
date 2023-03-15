@@ -69,6 +69,20 @@ CLASS ZCL_W3MIME_UTILS IMPLEMENTATION.
   endmethod.
 
 
+  method download_targets.
+
+    field-symbols <t> like line of it_targets.
+
+    loop at it_targets assigning <t>.
+      zcl_w3mime_utils=>download(
+        iv_filename = <t>-path
+        iv_type     = <t>-w3key-relid
+        iv_key      = <t>-w3key-objid ).
+    endloop.
+
+  endmethod.
+
+
   method upload.
 
     data lt_data type lvc_t_mime.
@@ -93,18 +107,6 @@ CLASS ZCL_W3MIME_UTILS IMPLEMENTATION.
 
   endmethod.
 
-  method download_targets.
-
-    field-symbols <t> like line of it_targets.
-
-    loop at it_targets assigning <t>.
-      zcl_w3mime_utils=>download(
-        iv_filename = <t>-path
-        iv_type     = <t>-w3key-relid
-        iv_key      = <t>-w3key-objid ).
-    endloop.
-
-  endmethod.
 
   method upload_targets.
 
@@ -118,6 +120,4 @@ CLASS ZCL_W3MIME_UTILS IMPLEMENTATION.
     endloop.
 
   endmethod.
-
-
 ENDCLASS.
