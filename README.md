@@ -1,27 +1,43 @@
 # ABAP W3MI poller
-A tool to poll file change and upload changed files automatically as W3MI object.
-Created mainly to simplify CSS editing in https://github.com/abapGit/abapGit, but can be used for other purposes.
 
-In particular, can be used as a **library** of file system and mime object tools. Which I actually do in my other project e.g. [mockup loader](https://github.com/sbcgua/mockup_loader) and [mockup compiler](https://github.com/sbcgua/mockup_compiler). See more details below.
+A tool to poll file changes and upload changed files automatically as W3MI objects.
+Created mainly to simplify CSS editing in [abapGit](https://github.com/abapGit/abapGit), but can be used for other purposes.
 
-![logo](https://github.com/sbcgua/abap_w3mi_poller/wiki/img/w3mipoller-logo.png)
+![logo](img/w3mipoller-logo.png)
 
 ## Installation
 
-Clone the repository to your SAP system using [abapGit](https://github.com/abapGit/abapGit) tool.
+Clone the repository to your SAP system using [abapGit](https://github.com/abapGit/abapGit).
 
 ## Usage
-Enter filename to poll and target object at selection screen. You can also choose multiple polling pairs. The first pair is remembered in user parameters for the session live time.
 
-Optionally, choose if you want to upload the file to SAP or replace the fronend file before the polling start.
+### File-by-File polling
 
-![Selection screen](https://github.com/sbcgua/abap_w3mi_poller/wiki/img/selscreen.png)
+Enter filenames to poll and target objects at the selection screen. You can also one of many pairs. The first pair is remembered in user parameters for the session live time (`ZW3MIMEPOLL_FILE` / `ZW3MIMEPOLL_OBJ`).
 
-![Poller](https://github.com/sbcgua/abap_w3mi_poller/wiki/img/poller.png)
+Optionally, choose if you want to upload the file to SAP or replace the frontend file before the polling start.
+
+![Selection screen](img/file-by-file-sel.png)
+
+![Result](img/file-by-file-log.png)
+
+### Whole package polling
+
+Enter package to poll and a root directory to save files to. The program will automatically detect all sub-packages, find all W3MI object and start tracking them. Importantly, W3MI object metadata must contain a filename (it will be used to match objects and files in directory).
+
+- As with the file-by-file mode you can choose an initial action to download or upload files once at start.
+- Additionally, you can specify a regex to narrow down the file list (it is abap regex, so it's quite limited ... but still can be of use)
+- You can also use "Sort by extension into dirs" option. In this mode, the program will order files by their extensions (must be a part of W3MI metadata !), create respecting subdirectories and put the files in there (e.g. all `.css` files will go to `css` subdirectory )
+
+![Selection screen](img/by-package-sel.png)
+
+![Result](img/by-package-log.png)
+
+[A small video demo](img/demo.mp4)
 
 ## Use as library
 
-The package contains several useful routines grouped into classes. All routines are static methods. Some of them may raise `zcx_w3mime_error` exception (use `get_text` to get some description of an error). For more details see implementations directly - the routines are mostly simple convenient wrappers over existing SAP calls. Might happen that I invented bicycle or a couple - sorry if so :)
+The package contains several useful routines grouped into classes. All routines are static methods. Some of them may raise `zcx_w3mime_error` exception (use `get_text` to get some description of an error). For more details see implementations directly - the routines are mostly simple convenient wrappers over existing SAP calls. Can be used separately.
 
 - zcl_w3mime_storage
   - `read_object(_x)` - read MIME object into raw255 table (or xstring)

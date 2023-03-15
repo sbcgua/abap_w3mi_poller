@@ -21,6 +21,18 @@ class zcl_w3mime_utils definition
       raising
         zcx_w3mime_error.
 
+    class-methods upload_targets
+      importing
+        it_targets  type zif_w3mime=>tty_poll_targets
+      raising
+        zcx_w3mime_error.
+
+    class-methods download_targets
+      importing
+        it_targets  type zif_w3mime=>tty_poll_targets
+      raising
+        zcx_w3mime_error.
+
   protected section.
   private section.
 ENDCLASS.
@@ -57,6 +69,20 @@ CLASS ZCL_W3MIME_UTILS IMPLEMENTATION.
   endmethod.
 
 
+  method download_targets.
+
+    field-symbols <t> like line of it_targets.
+
+    loop at it_targets assigning <t>.
+      zcl_w3mime_utils=>download(
+        iv_filename = <t>-path
+        iv_type     = <t>-w3key-relid
+        iv_key      = <t>-w3key-objid ).
+    endloop.
+
+  endmethod.
+
+
   method upload.
 
     data lt_data type lvc_t_mime.
@@ -78,6 +104,20 @@ CLASS ZCL_W3MIME_UTILS IMPLEMENTATION.
       iv_key  = iv_key
       it_data = lt_data
       iv_size = lv_size ).
+
+  endmethod.
+
+
+  method upload_targets.
+
+    field-symbols <t> like line of it_targets.
+
+    loop at it_targets assigning <t>.
+      zcl_w3mime_utils=>upload(
+        iv_filename = <t>-path
+        iv_type     = <t>-w3key-relid
+        iv_key      = <t>-w3key-objid ).
+    endloop.
 
   endmethod.
 ENDCLASS.

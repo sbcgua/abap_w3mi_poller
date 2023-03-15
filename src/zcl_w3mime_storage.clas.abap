@@ -5,6 +5,15 @@ class zcl_w3mime_storage definition
 
   public section.
 
+    types:
+      begin of ty_meta,
+        filename type string,
+        ext type string,
+        mimetype type string,
+        version type string,
+        size type i,
+      end of ty_meta.
+
     class-methods check_obj_exists
       importing
         !iv_key       type wwwdata-objid
@@ -34,6 +43,14 @@ class zcl_w3mime_storage definition
         !iv_type         type wwwdata-relid default 'MI'
       returning
         value(rs_object) type wwwdatatab
+      raising
+        zcx_w3mime_error .
+    class-methods get_object_meta
+      importing
+        !iv_key          type wwwdata-objid
+        !iv_type         type wwwdata-relid default 'MI'
+      returning
+        value(rs_meta) type ty_meta
       raising
         zcx_w3mime_error .
     class-methods read_object_x
@@ -157,6 +174,40 @@ CLASS ZCL_W3MIME_STORAGE IMPLEMENTATION.
     if sy-subrc > 0.
       zcx_w3mime_error=>raise( 'Cannot read W3xx info' ).   "#EC NOTEXT
     endif.
+
+  endmethod.
+
+
+  method get_object_meta.
+
+    data lt_params type table of wwwparams.
+    field-symbols <i> like line of lt_params.
+
+    call function 'WWWPARAMS_READ_ALL'
+      exporting
+        type   = iv_type
+        objid  = iv_key
+      tables
+        params = lt_params
+      exceptions
+        others = 1.
+
+    loop at lt_params assigning <i>.
+
+      case <i>-name.
+        when 'filesize'.
+          rs_meta-size = <i>-value.
+        when 'filename'.
+          rs_meta-filename = <i>-value.
+        when 'fileextension'.
+          rs_meta-ext = <i>-value.
+        when 'mimetype'.
+          rs_meta-mimetype = <i>-value.
+        when 'version'.
+          rs_meta-version = <i>-value.
+      endcase.
+
+    endloop.
 
   endmethod.
 
