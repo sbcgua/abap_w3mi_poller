@@ -45,6 +45,12 @@
      <ENTRY>Package</ENTRY>
      <LENGTH>15</LENGTH>
     </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_ROOT</KEY>
+     <ENTRY>Target root directory</ENTRY>
+     <LENGTH>29</LENGTH>
+    </item>
    </TPOOL>
   </asx:values>
  </asx:abap>
