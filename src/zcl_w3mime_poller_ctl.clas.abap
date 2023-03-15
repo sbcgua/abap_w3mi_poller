@@ -9,6 +9,7 @@ class ZCL_W3MIME_POLLER_CTL definition
       importing
         iv_interval type i
         it_targets  type zif_w3mime=>tty_poll_targets
+        iv_optimize_dir_reads type abap_bool default abap_false
       raising
         zcx_w3mime_error.
 
@@ -88,6 +89,7 @@ CLASS ZCL_W3MIME_POLLER_CTL IMPLEMENTATION.
     uline.
     create object mo_poller
       exporting
+        iv_optimize_dir_reads = iv_optimize_dir_reads
         it_targets  = lt_file_targets
         iv_interval = iv_interval.
     set handler me->handle_changed for mo_poller.

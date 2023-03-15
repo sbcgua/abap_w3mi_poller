@@ -32,13 +32,29 @@ class zcl_w3mime_poller definition
       importing
         !it_targets  type tt_target
         !iv_interval type i default 1 " 1 second
+        !iv_optimize_dir_reads type abap_bool default abap_false
       raising
         zcx_w3mime_error .
     methods start
       raising
         zcx_w3mime_error .
     methods handle_timer
-        for event finished of cl_gui_timer .
+      for event finished of cl_gui_timer .
+
+  protected section.
+  private section.
+    data mt_targets    type tt_target.
+    data mt_file_state type tt_file_state.
+    data mo_timer      type ref to cl_gui_timer.
+    data mv_optimize_dir_reads type abap_bool.
+    data mt_uniq_dirs type string_table.
+
+    methods normalize_and_acquire_targets
+      importing
+        !it_targets  type tt_target
+      raising
+        zcx_w3mime_error .
+
     methods read_current_state
       returning
         value(rt_state) type tt_file_state
@@ -59,13 +75,7 @@ class zcl_w3mime_poller definition
       importing
         !it_changes type tt_file_state
       changing
-        !ct_state   type tt_file_state .
-
-  protected section.
-  private section.
-    data mt_targets    type tt_target.
-    data mt_file_state type tt_file_state.
-    data mo_timer      type ref to cl_gui_timer.
+        !ct_state type tt_file_state .
 ENDCLASS.
 
 
@@ -74,26 +84,13 @@ CLASS ZCL_W3MIME_POLLER IMPLEMENTATION.
 
 
   method constructor.
+
     if lines( it_targets ) = 0.
       zcx_w3mime_error=>raise( 'Specify poll targets' ).    "#EC NOTEXT
     endif.
 
-    data lv_sep type c.
-    cl_gui_frontend_services=>get_file_separator( changing file_separator = lv_sep ).
-    mt_targets = it_targets.
-
-    field-symbols: <t> like line of mt_targets.
-    loop at mt_targets assigning <t>.
-      if <t>-directory is initial.
-        zcx_w3mime_error=>raise( 'Target directory cannot be empty' ). "#EC NOTEXT
-      endif.
-      if substring( val = <t>-directory off = strlen( <t>-directory ) - 1 len = 1 ) <> lv_sep.
-        <t>-directory = <t>-directory && lv_sep.
-      endif.
-      if <t>-filter is initial.
-        <t>-filter = '*.*'.
-      endif.
-    endloop.
+    mv_optimize_dir_reads = iv_optimize_dir_reads.
+    normalize_and_acquire_targets( it_targets ).
 
     create object mo_timer.
     set handler me->handle_timer for mo_timer.
@@ -111,7 +108,7 @@ CLASS ZCL_W3MIME_POLLER IMPLEMENTATION.
     " assuming both inputs are sorted
     loop at it_cur assigning <c>.
       read table it_prev assigning <p> with key path = <c>-path binary search.
-      if sy-subrc is not initial or <c>-timestamp <> <p>-timestamp.
+      if sy-subrc <> 0 or <c>-timestamp <> <p>-timestamp.
         append <c> to rt_changes.
       endif.
     endloop.
@@ -146,6 +143,7 @@ CLASS ZCL_W3MIME_POLLER IMPLEMENTATION.
     if lines( it_changes ) = 0.
       return.
     endif.
+
     append lines of it_changes to ct_state.
     sort ct_state by path ascending timestamp descending.
     delete adjacent duplicates from ct_state comparing path.
@@ -153,30 +151,73 @@ CLASS ZCL_W3MIME_POLLER IMPLEMENTATION.
   endmethod.
 
 
+  method normalize_and_acquire_targets.
+
+    field-symbols <t> like line of mt_targets.
+
+    mt_targets = it_targets.
+
+    loop at mt_targets assigning <t>.
+      if <t>-directory is initial.
+        zcx_w3mime_error=>raise( 'Target directory cannot be empty' ). "#EC NOTEXT
+      endif.
+      <t>-directory = zcl_w3mime_fs=>path_ensure_dir_tail( <t>-directory ).
+      if <t>-filter is initial.
+        <t>-filter = '*.*'.
+      endif.
+      append <t>-directory to mt_uniq_dirs.
+    endloop.
+
+    sort mt_uniq_dirs.
+    delete adjacent duplicates from mt_uniq_dirs.
+
+  endmethod.
+
+
   method read_current_state.
 
     data lt_files type standard table of file_info.
-    field-symbols <state> like line of rt_state.
+    data state like line of rt_state.
     field-symbols <t>     like line of mt_targets.
+    field-symbols <file>  like line of lt_files.
+    field-symbols <dir>   like line of mt_uniq_dirs.
 
-    loop at mt_targets assigning <t>.
-      lt_files = zcl_w3mime_fs=>read_dir(
-        iv_dir    = <t>-directory
-        iv_filter = <t>-filter ).
-
-      field-symbols <file> like line of lt_files.
-      loop at lt_files assigning <file> where isdir is initial.
-        append initial line to rt_state assigning <state>.
-        <state>-path = <t>-directory && <file>-filename.
-        concatenate <file>-writedate <file>-writetime into <state>-timestamp. " Hmmm
-*      cl_abap_tstmp=>systemtstmp_syst2utc(
-*        exporting
-*          syst_date = <file>-writedate
-*          syst_time = <file>-writetime
-*        importing
-*          utc_tstmp = <state>-timestamp ).
+    if mv_optimize_dir_reads = abap_true.
+      loop at mt_uniq_dirs assigning <dir>.
+        lt_files = zcl_w3mime_fs=>read_dir(
+          iv_dir    = <dir>
+          iv_filter = '*.*' ).
+        " Assume filter is filename, not a pattern !
+        " And also assume both dir and filter are upper cased
+        data lv_dir type string.
+        data lv_file type string.
+        loop at lt_files assigning <file> where isdir = abap_false.
+          lv_dir  = to_upper( <dir> ).
+          lv_file = to_upper( <file>-filename ).
+          read table mt_targets transporting no fields
+            with key
+              directory = lv_dir
+              filter    = lv_file.
+          if sy-subrc = 0.
+            state-path = <dir> && <file>-filename.
+            concatenate <file>-writedate <file>-writetime into state-timestamp.
+            append state to rt_state.
+          endif.
+        endloop.
       endloop.
-    endloop.
+    else.
+      loop at mt_targets assigning <t>.
+        lt_files = zcl_w3mime_fs=>read_dir(
+          iv_dir    = <t>-directory
+          iv_filter = <t>-filter ).
+
+        loop at lt_files assigning <file> where isdir = abap_false.
+          state-path = <t>-directory && <file>-filename.
+          concatenate <file>-writedate <file>-writetime into state-timestamp.
+          append state to rt_state.
+        endloop.
+      endloop.
+    endif.
 
     sort rt_state by path.
 

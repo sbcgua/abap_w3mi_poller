@@ -8,6 +8,8 @@ class ltcl_poller_test definition final for testing
     methods merge_changes for testing.
 endclass.
 
+class zcl_w3mime_poller definition local friends ltcl_poller_test.
+
 class ltcl_poller_test implementation.
 
   method manual_state_check.

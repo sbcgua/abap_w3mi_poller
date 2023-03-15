@@ -339,14 +339,10 @@ class lcl_app_by_package implementation.
     data lo_poller type ref to zcl_w3mime_poller_ctl.
     create object lo_poller
       exporting
+        iv_optimize_dir_reads = abap_true
         it_targets  = lt_targets
         iv_interval = 1. " 1 sec
     lo_poller->start( ).
-
-    " Improve poll time / optimize dirs
-
-    " start poller
-    " regex for filenames ?
 
   endmethod.
 
