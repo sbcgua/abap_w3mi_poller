@@ -1,3 +1,5 @@
+![Abap package version](https://img.shields.io/endpoint?url=https://shield.abap.space/version-shield-json/github/sbcgua/abap_w3mi_poller/src/zif_w3mime.intf.abap/version)
+
 # ABAP W3MI poller
 
 A tool to poll file changes and upload changed files automatically as W3MI objects.
