@@ -101,15 +101,23 @@ class ltcl_fs_test implementation.
 
   method path_join.
 
-    data lv_act type string.
-
-    lv_act = zcl_w3mime_fs=>path_join(
-      iv_p1 = 'c:\tmp'
-      iv_p2 = 'test' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_w3mime_fs=>path_join(
+        iv_p1 = 'c:\tmp'
+        iv_p2 = 'test' )
+      exp = 'c:\tmp\test' ).
 
     cl_abap_unit_assert=>assert_equals(
-      act = lv_act
-      exp = 'c:\tmp\test' ).
+      act = zcl_w3mime_fs=>path_join(
+        iv_p1 = 'c:\tmp'
+        iv_p2 = '' )
+      exp = 'c:\tmp' ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_w3mime_fs=>path_join(
+        iv_p1 = ''
+        iv_p2 = 'test' )
+      exp = 'test' ).
 
   endmethod.
 
