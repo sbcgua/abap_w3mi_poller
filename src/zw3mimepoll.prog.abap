@@ -285,8 +285,16 @@ class lcl_app_by_package implementation.
       clear: <t>-directory, <t>-filename. " cleanup temporary data
     endloop.
 
+    data lo_poller type ref to zcl_w3mime_poller_ctl.
+    create object lo_poller
+      exporting
+        it_targets  = lt_targets
+        iv_interval = 1. " 1 sec
+    lo_poller->start( ).
+
+    " Improve poll time / optimize dirs
+
     " start poller
-    " check if poller works for the same dir and multi files
     " regex for filenames ?
 
   endmethod.

@@ -61,6 +61,7 @@ CLASS ZCL_W3MIME_POLLER_CTL IMPLEMENTATION.
     loop at mt_targets assigning <t>.
       lv_idx = sy-tabix.
 
+      <t>-path = to_upper( <t>-path ). " To search after
       zcl_w3mime_validator=>validate_params(
         iv_filename = <t>-path
         is_w3key    = <t>-w3key ).
