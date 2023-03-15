@@ -54,6 +54,7 @@ class lcl_app_by_package definition final.
       importing
         iv_package  type devclass
         iv_rootdir  type string
+        fn_regex    type string
         ext_to_dir  type abap_bool
         do_download type abap_bool
         do_upload   type abap_bool
@@ -95,15 +96,31 @@ class lcl_app_by_package definition final.
       raising
         zcx_w3mime_error.
 
+    class-methods filter_with_regex
+      importing
+        fn_regex type string
+      changing
+        ct_targets type zif_w3mime=>tty_poll_targets
+      raising
+        zcx_w3mime_error.
+
     class-methods filter_existing_files_only
       changing
         ct_targets type zif_w3mime=>tty_poll_targets
       raising
         zcx_w3mime_error.
 
+    class-methods writes
+      importing
+        iv_str type string.
+
 endclass.
 
 class lcl_app_by_package implementation.
+
+  method writes.
+    write: / iv_str.
+  endmethod.
 
   method validate_params.
 
@@ -201,6 +218,32 @@ class lcl_app_by_package implementation.
 
   endmethod.
 
+  method filter_with_regex.
+
+    data lo_regex   type ref to cl_abap_regex.
+    data lo_matcher type ref to cl_abap_matcher.
+    data lv_idx     type i.
+    field-symbols <t> like line of ct_targets.
+
+    try.
+      create object lo_regex
+        exporting
+          pattern     = fn_regex
+          ignore_case = abap_true.
+    catch cx_sy_regex.
+      zcx_w3mime_error=>raise( 'Bad regex' ).
+    endtry.
+
+    loop at ct_targets assigning <t>.
+      lv_idx = sy-tabix.
+      lo_matcher = lo_regex->create_matcher( text = <t>-filename ).
+      if lo_matcher->match( ) = abap_false.
+        delete ct_targets index lv_idx.
+      endif.
+    endloop.
+
+  endmethod.
+
   method run.
 
     validate_params(
@@ -211,11 +254,9 @@ class lcl_app_by_package implementation.
     write: / 'Root dir:', iv_rootdir.
 
     data lt_packages type tty_packages.
-    data lv_tmp type string.
 
     lt_packages = find_all_packages( iv_package ).
-    lv_tmp = |{ lines( lt_packages ) }|.
-    write: / 'Found relevant (sub)packages:', lv_tmp.
+    writes( |Found relevant (sub)packages: { lines( lt_packages ) }| ).
 
     data lt_uniq_paths type tty_sorted_strings.
     data lt_uniq_dirs type tty_sorted_strings.
@@ -226,6 +267,17 @@ class lcl_app_by_package implementation.
     lt_targets = find_all_targets(
       it_packages = lt_packages
       ext_to_dir  = ext_to_dir ).
+
+    writes( |Found MIME objects: { lines( lt_targets ) }| ).
+
+    if fn_regex is not initial.
+      filter_with_regex(
+        exporting
+          fn_regex = fn_regex
+        changing
+          ct_targets = lt_targets ).
+      writes( |  after regex: { lines( lt_targets ) }| ).
+    endif.
 
     loop at lt_targets assigning <t>.
       lv_idx = sy-tabix.
@@ -254,9 +306,8 @@ class lcl_app_by_package implementation.
         iv_p2 = <t>-path ).
     endloop.
 
-    lv_tmp = |{ lines( lt_targets ) }|.
     uline.
-    write: / 'Found proper MIME objects:', lv_tmp.
+    writes( |Found proper MIME objects: { lines( lt_targets ) }| ).
 
     if ext_to_dir = abap_true.
       prove_dirs(
@@ -370,6 +421,7 @@ selection-screen end of block b1.
 selection-screen begin of block b2 with frame title txt_b2.
   parameters p_pkg type devclass modif id pkg.
   parameters p_root type char255 modif id pkg.
+  parameters p_regex type string lower case modif id pkg.
   parameters p_e2dir type xfeld modif id pkg.
 selection-screen end of block b2.
 
@@ -552,6 +604,7 @@ form main.
       lcl_app_by_package=>run(
         iv_package  = p_pkg
         iv_rootdir  = |{ p_root }|
+        fn_regex    = |{ p_regex }|
         ext_to_dir  = p_e2dir
         do_upload   = p_upl
         do_download = p_down ).

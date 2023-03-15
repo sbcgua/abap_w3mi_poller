@@ -47,6 +47,12 @@
     </item>
     <item>
      <ID>S</ID>
+     <KEY>P_REGEX</KEY>
+     <ENTRY>Filename regex (optional)</ENTRY>
+     <LENGTH>33</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
      <KEY>P_ROOT</KEY>
      <ENTRY>Target root directory</ENTRY>
      <LENGTH>29</LENGTH>
