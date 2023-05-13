@@ -146,13 +146,18 @@ class lcl_app_by_package implementation.
 
   method find_all_packages.
 
+    data lt_subpkgs like rt_packages.
     field-symbols <pkg> like line of rt_packages.
+
     append iv_package to rt_packages.
 
     loop at rt_packages assigning <pkg>.
       select devclass from tdevc
-        appending table rt_packages
+        into table lt_subpkgs
         where parentcl = <pkg>.
+      if sy-subrc = 0.
+        append lines of lt_subpkgs to rt_packages.
+      endif.
     endloop.
 
   endmethod.
