@@ -85,7 +85,7 @@ CLASS ZCL_W3MIME_POLLER_CTL IMPLEMENTATION.
 
     endloop.
 
-    write / 'Staring polling ...'. "#EC NOTEXT
+    write / 'Starting polling ...'. "#EC NOTEXT
     uline.
     create object mo_poller
       exporting
